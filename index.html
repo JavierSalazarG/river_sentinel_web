@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centinela del Rio - Panel de Control</title>
+    <link rel="stylesheet" href="static/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Pantalla de Login -->
+    <div id="auth-screen" class="auth-screen">
+        <div class="auth-container">
+            <div class="auth-header">
+                <h1>Centinela del Rio</h1>
+                <p>Sistema de Monitorizacion Ambiental</p>
+            </div>
+
+            <div id="login-form-container" class="auth-form-container">
+                <h2>Iniciar Sesion</h2>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" name="email" placeholder="tu@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Contrasena</label>
+                        <input type="password" id="login-password" name="password" placeholder="********" required>
+                    </div>
+                    <div id="login-error" class="auth-error hidden"></div>
+                    <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+                </form>
+                <p class="auth-info">Contacta con un administrador para obtener acceso.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aplicacion Principal -->
+    <div id="app" class="hidden">
+        <header>
+            <div class="header-left">
+                <h1>Centinela del Rio</h1>
+                <p id="header-subtitle">Panel de Control</p>
+            </div>
+            <div class="header-right">
+                <div id="health-status" class="health-badge">Verificando...</div>
+                <div class="user-menu">
+                    <span id="user-name">Usuario</span>
+                    <span id="user-role-badge" class="role-badge">worker</span>
+                    <button id="user-menu-btn" class="btn btn-secondary btn-sm" onclick="toggleUserMenu()">Menu</button>
+                    <div id="user-dropdown" class="dropdown-menu hidden">
+                        <a href="#" onclick="logout()">Cerrar Sesion</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navegacion para admin y workers -->
+        <nav id="admin-nav" class="admin-nav hidden">
+            <button class="nav-btn active" onclick="showSection('dashboard')">Dashboard</button>
+            <button class="nav-btn" onclick="showSection('workers')" id="nav-workers">Workers</button>
+            <button class="nav-btn" onclick="showSection('assignments')" id="nav-assignments">Asignaciones</button>
+            <button class="nav-btn" onclick="showSection('components')" id="nav-components">Componentes</button>
+            <button class="nav-btn" onclick="showSection('stats')" id="nav-stats">Estadisticas</button>
+            <button class="nav-btn" onclick="showSection('config')" id="nav-config">Configuracion</button>
+        </nav>
+
+        <main>
+            <!-- Seccion Dashboard (visible para todos) -->
+            <div id="section-dashboard">
+                <!-- Lista de Dispositivos -->
+                <section class="card">
+                    <div class="section-header">
+                        <h2>Dispositivos</h2>
+                        <button id="btn-add-device" class="btn btn-primary btn-sm hidden" onclick="openCreateDeviceModal()">
+                            + Nuevo Dispositivo
+                        </button>
+                    </div>
+                    <div class="list-header">
+                        <span id="devices-count">0 dispositivos</span>
+                        <button id="refresh-devices" class="btn btn-secondary btn-sm">Actualizar</button>
+                    </div>
+                    <div id="devices-list" class="items-list">
+                        <p class="empty-state">Cargando...</p>
+                    </div>
+                </section>
+
+                <!-- Mapa de dispositivos -->
+                <section class="card">
+                    <h2>Mapa de Dispositivos</h2>
+                    <div id="map"></div>
+                </section>
+
+                <!-- Detecciones y Alertas -->
+                <div class="two-columns">
+                    <section class="card">
+                        <h2>Detecciones Recientes</h2>
+                        <div class="list-header">
+                            <select id="detection-device-filter">
+                                <option value="">Todos los dispositivos</option>
+                            </select>
+                            <button id="refresh-detections" class="btn btn-secondary btn-sm">Actualizar</button>
+                        </div>
+                        <div id="detections-list" class="items-list">
+                            <p class="empty-state">Cargando...</p>
+                        </div>
+                    </section>
+
+                    <section class="card">
+                        <h2>
+                            Alertas
+                            <span id="alerts-badge" class="alerts-badge hidden">0</span>
+                        </h2>
+                        <div class="list-header">
+                            <select id="alert-filter">
+                                <option value="">Todas</option>
+                                <option value="false">Pendientes</option>
+                                <option value="true">Reconocidas</option>
+                            </select>
+                            <button id="refresh-alerts" class="btn btn-secondary btn-sm">Actualizar</button>
+                        </div>
+                        <div id="alerts-list" class="items-list">
+                            <p class="empty-state">Cargando...</p>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Seccion Workers (solo admin) -->
+            <div id="section-workers" class="hidden">
+                <section class="card">
+                    <h2>Gestion de Workers</h2>
+                    <div class="form-section">
+                        <h3>Crear Worker</h3>
+                        <form id="create-worker-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="worker-email">Email</label>
+                                    <input type="email" id="worker-email" name="email" placeholder="worker@email.com" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="worker-name">Nombre</label>
+                                    <input type="text" id="worker-name" name="name" placeholder="Nombre del worker">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="worker-password">Contrasena</label>
+                                <input type="password" id="worker-password" name="password" placeholder="Min 6 caracteres" required minlength="6">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Crear Worker</button>
+                        </form>
+                    </div>
+
+                    <div class="list-section">
+                        <div class="list-header">
+                            <h3>Lista de Workers</h3>
+                            <button id="refresh-workers" class="btn btn-secondary btn-sm" onclick="loadWorkers()">Actualizar</button>
+                        </div>
+                        <div id="workers-list" class="items-list">
+                            <p class="empty-state">Cargando...</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Seccion Asignaciones (solo admin) -->
+            <div id="section-assignments" class="hidden">
+                <section class="card">
+                    <h2>Asignaciones de Dispositivos</h2>
+                    <div class="form-section">
+                        <h3>Asignar Dispositivo a Worker</h3>
+                        <form id="assign-device-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="assign-worker">Worker</label>
+                                    <select id="assign-worker" required>
+                                        <option value="">Selecciona un worker</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="assign-device">Dispositivo</label>
+                                    <select id="assign-device" required>
+                                        <option value="">Selecciona un dispositivo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="assign-notes">Notas (opcional)</label>
+                                <input type="text" id="assign-notes" name="notes" placeholder="Instrucciones especiales...">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Asignar</button>
+                        </form>
+                    </div>
+
+                    <div class="list-section">
+                        <div class="list-header">
+                            <h3>Asignaciones Actuales</h3>
+                            <button class="btn btn-secondary btn-sm" onclick="loadAssignments()">Actualizar</button>
+                        </div>
+                        <div id="assignments-list" class="items-list">
+                            <p class="empty-state">Cargando...</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Seccion Componentes (admin y workers) -->
+            <div id="section-components" class="hidden">
+                <!-- Catalogo (solo admin) -->
+                <div id="components-catalog" class="hidden">
+                    <section class="card">
+                        <h2>Catalogo de Componentes</h2>
+
+                        <!-- Categorias -->
+                        <div class="form-section">
+                            <h3>Categorias</h3>
+                            <form id="create-category-form" class="inline-form">
+                                <input type="text" id="category-name" placeholder="Nombre de categoria" required>
+                                <input type="text" id="category-description" placeholder="Descripcion (opcional)">
+                                <button type="submit" class="btn btn-primary">Crear</button>
+                            </form>
+                            <div id="categories-list" class="items-list compact">
+                                <p class="empty-state">Cargando...</p>
+                            </div>
+                        </div>
+
+                        <!-- Componentes del catalogo -->
+                        <div class="form-section">
+                            <h3>Componentes</h3>
+                            <form id="create-component-form" class="inline-form">
+                                <select id="component-category" required>
+                                    <option value="">Categoria</option>
+                                </select>
+                                <input type="text" id="component-name" placeholder="Nombre del componente" required>
+                                <input type="text" id="component-specs" placeholder="Especificaciones (opcional)">
+                                <button type="submit" class="btn btn-primary">Crear</button>
+                            </form>
+                            <div id="catalog-components-list" class="items-list">
+                                <p class="empty-state">Cargando...</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Componentes que necesitan atencion -->
+                <section class="card">
+                    <h2>Componentes que Necesitan Atencion</h2>
+                    <div class="list-header">
+                        <span id="attention-count">0 componentes</span>
+                        <button class="btn btn-secondary btn-sm" onclick="loadNeedsAttention()">Actualizar</button>
+                    </div>
+                    <div id="needs-attention-list" class="items-list">
+                        <p class="empty-state">Cargando...</p>
+                    </div>
+                </section>
+
+                <!-- Componentes por dispositivo -->
+                <section class="card">
+                    <h2>Componentes por Dispositivo</h2>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <select id="device-component-select" onchange="loadDeviceComponents()">
+                                <option value="">Selecciona un dispositivo</option>
+                            </select>
+                        </div>
+                        <div id="assign-component-section" class="hidden">
+                            <select id="assign-component-select">
+                                <option value="">Selecciona componente</option>
+                            </select>
+                            <button class="btn btn-primary btn-sm" onclick="assignComponentToDevice()">Asignar</button>
+                        </div>
+                    </div>
+                    <div id="device-components-list" class="items-list">
+                        <p class="empty-state">Selecciona un dispositivo</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Seccion Estadisticas (solo admin por ahora) -->
+            <div id="section-stats" class="hidden">
+                <!-- Overview Cards -->
+                <div class="stats-overview">
+                    <div class="stat-card">
+                        <div class="stat-icon devices">&#128225;</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="stat-devices-total">-</div>
+                            <div class="stat-label">Dispositivos</div>
+                            <div class="stat-detail" id="stat-devices-detail">-</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon detections">&#128269;</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="stat-detections-total">-</div>
+                            <div class="stat-label">Detecciones</div>
+                            <div class="stat-detail" id="stat-detections-detail">-</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon alerts">&#128680;</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="stat-alerts-total">-</div>
+                            <div class="stat-label">Alertas</div>
+                            <div class="stat-detail" id="stat-alerts-detail">-</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon components">&#128736;</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="stat-components-total">-</div>
+                            <div class="stat-label">Componentes</div>
+                            <div class="stat-detail" id="stat-components-detail">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="stats-charts">
+                    <section class="card">
+                        <h2>Tendencia de Detecciones (30 dias)</h2>
+                        <div class="chart-container">
+                            <canvas id="chart-detections"></canvas>
+                        </div>
+                    </section>
+                    <section class="card">
+                        <h2>Tendencia de Alertas (30 dias)</h2>
+                        <div class="chart-container">
+                            <canvas id="chart-alerts"></canvas>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Rankings -->
+                <div class="stats-rankings">
+                    <section class="card">
+                        <h2>Dispositivos con mas Alertas</h2>
+                        <div id="ranking-alerts" class="ranking-list">
+                            <p class="empty-state">Cargando...</p>
+                        </div>
+                    </section>
+                    <section class="card">
+                        <h2>Dispositivos con mas Detecciones</h2>
+                        <div id="ranking-detections" class="ranking-list">
+                            <p class="empty-state">Cargando...</p>
+                        </div>
+                    </section>
+                    <section class="card">
+                        <h2>Componentes mas Reemplazados</h2>
+                        <div id="ranking-replacements" class="ranking-list">
+                            <p class="empty-state">Cargando...</p>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Maintenance Stats -->
+                <section class="card">
+                    <h2>Mantenimiento por Dispositivo</h2>
+                    <div id="maintenance-by-device" class="maintenance-table">
+                        <p class="empty-state">Cargando...</p>
+                    </div>
+                </section>
+
+                <!-- Worker Performance (solo admin) -->
+                <section class="card" id="worker-performance-section">
+                    <h2>Rendimiento de Workers</h2>
+                    <div id="worker-performance" class="worker-performance-table">
+                        <p class="empty-state">Cargando...</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Seccion Configuracion (solo admin) -->
+            <div id="section-config" class="hidden">
+                <!-- Info del sistema -->
+                <section class="card">
+                    <h2>Informacion del Sistema</h2>
+                    <div class="system-info">
+                        <div class="info-row">
+                            <span class="info-label">Backend URL</span>
+                            <span class="info-value" id="config-backend-url">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Usuario</span>
+                            <span class="info-value" id="config-user-email">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Rol</span>
+                            <span class="info-value" id="config-user-role">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Estado conexion</span>
+                            <span class="info-value" id="config-connection-status">-</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Acciones rapidas -->
+                <section class="card">
+                    <h2>Acciones</h2>
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary" onclick="exportData()">Exportar datos (JSON)</button>
+                        <button class="btn btn-secondary" onclick="testConnection()">Probar conexion</button>
+                        <button class="btn btn-danger" onclick="clearLocalData()">Limpiar cache local</button>
+                    </div>
+                </section>
+
+                <!-- Consola de depuracion -->
+                <section class="card">
+                    <h2>Consola de Depuracion</h2>
+                    <p class="section-description">Registro de llamadas a la API para depuracion</p>
+                    <div id="console" class="console">
+                        <p class="console-welcome">Las respuestas de la API apareceran aqui...</p>
+                    </div>
+                    <button id="clear-console" class="btn btn-secondary">Limpiar consola</button>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal para crear dispositivo -->
+    <div id="create-device-modal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>Nuevo Dispositivo</h3>
+                <button class="modal-close" onclick="closeCreateDeviceModal()">&times;</button>
+            </div>
+            <form id="create-device-form">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="device_id">ID del Dispositivo</label>
+                            <input type="text" id="device_id" name="device_id" placeholder="nodo-rio-01" required>
+                            <small class="form-hint">Identificador unico (ej: nodo-puente-01)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="name">Nombre</label>
+                            <input type="text" id="name" name="name" placeholder="Nodo Puente Viejo" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Descripcion (opcional)</label>
+                        <input type="text" id="description" name="description" placeholder="Sensor ubicado junto al puente...">
+                    </div>
+                    <div class="form-group">
+                        <label>Ubicacion</label>
+                        <p class="form-hint">Haz click en el mapa o arrastra el marcador para seleccionar la ubicacion</p>
+                        <div id="location-picker-map"></div>
+                        <div class="location-coords">
+                            <span id="selected-coords">Sin ubicacion seleccionada</span>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="useMyLocation()">Usar mi ubicacion</button>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="latitude">Latitud</label>
+                            <input type="number" id="latitude" name="latitude" step="any" placeholder="36.7654" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="longitude">Longitud</label>
+                            <input type="number" id="longitude" name="longitude" step="any" placeholder="-4.7321" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateDeviceModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Crear Dispositivo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para editar dispositivo -->
+    <div id="edit-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Dispositivo</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="edit-device-form">
+                <input type="hidden" id="edit-id">
+                <div class="form-group">
+                    <label for="edit-name">Nombre</label>
+                    <input type="text" id="edit-name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-description">Descripcion</label>
+                    <input type="text" id="edit-description" name="description">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-latitude">Latitud</label>
+                        <input type="number" id="edit-latitude" name="latitude" step="any" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-longitude">Longitud</label>
+                        <input type="number" id="edit-longitude" name="longitude" step="any" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="edit-status">Estado</label>
+                    <select id="edit-status" name="status">
+                        <option value="active">Activo</option>
+                        <option value="inactive">Inactivo</option>
+                        <option value="offline">Offline</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para ver worker -->
+    <div id="worker-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Detalles del Worker</h3>
+                <button class="modal-close" onclick="closeWorkerModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="worker-details"></div>
+                <h4>Dispositivos Asignados</h4>
+                <div id="worker-devices-list" class="items-list">
+                    <p class="empty-state">Sin dispositivos asignados</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para ver componentes de un dispositivo (workers) -->
+    <div id="device-components-modal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>Componentes del Dispositivo: <span id="device-components-title"></span></h3>
+                <button class="modal-close" onclick="closeDeviceComponentsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="device-components-modal-id">
+                <div id="device-components-modal-list" class="items-list">
+                    <p class="empty-state">Cargando...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para componente de dispositivo -->
+    <div id="component-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Detalles del Componente</h3>
+                <button class="modal-close" onclick="closeComponentModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="component-details"></div>
+
+                <h4>Actualizar Estado</h4>
+                <form id="update-component-status-form">
+                    <input type="hidden" id="component-device-id">
+                    <input type="hidden" id="component-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="component-status">Estado</label>
+                            <select id="component-status">
+                                <option value="ok">OK</option>
+                                <option value="needs_repair">Necesita reparacion</option>
+                                <option value="needs_replacement">Necesita sustitucion</option>
+                                <option value="replaced">Sustituido</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="component-notes">Notas</label>
+                            <input type="text" id="component-notes" placeholder="Notas sobre el estado...">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Actualizar</button>
+                </form>
+
+                <h4>Historial de Mantenimiento</h4>
+                <div id="maintenance-list" class="items-list compact">
+                    <p class="empty-state">Sin mantenimientos registrados</p>
+                </div>
+
+                <h4>Registrar Mantenimiento</h4>
+                <form id="create-maintenance-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="maintenance-type">Tipo</label>
+                            <select id="maintenance-type" required>
+                                <option value="inspection">Inspeccion</option>
+                                <option value="repair">Reparacion</option>
+                                <option value="replacement">Sustitucion</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="maintenance-description">Descripcion</label>
+                            <input type="text" id="maintenance-description" placeholder="Que se hizo...">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Registrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="static/config.js"></script>
+    <script src="static/app.js"></script>
+</body>
+</html>
