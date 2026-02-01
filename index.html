@@ -29,6 +29,11 @@
                         <label for="login-password">Contrasena</label>
                         <input type="password" id="login-password" name="password" placeholder="********" required>
                     </div>
+                    <div id="totp-group" class="form-group hidden">
+                        <label for="login-totp">Codigo 2FA</label>
+                        <input type="text" id="login-totp" name="totp_code" placeholder="000000" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code">
+                        <small class="form-hint">Introduce el codigo de 6 digitos de Authy</small>
+                    </div>
                     <div id="login-error" class="auth-error hidden"></div>
                     <button type="submit" class="btn btn-primary btn-block">Entrar</button>
                 </form>
@@ -393,6 +398,48 @@
                             <span class="info-label">Estado conexion</span>
                             <span class="info-value" id="config-connection-status">-</span>
                         </div>
+                    </div>
+                </section>
+
+                <!-- Seguridad 2FA -->
+                <section class="card">
+                    <h2>Autenticacion de Dos Factores (2FA)</h2>
+                    <p class="section-description">Protege tu cuenta con un codigo adicional de Authy o Google Authenticator</p>
+
+                    <div id="2fa-status-section">
+                        <div class="info-row">
+                            <span class="info-label">Estado 2FA</span>
+                            <span class="info-value" id="2fa-status">Cargando...</span>
+                        </div>
+                    </div>
+
+                    <!-- Configurar 2FA (cuando no esta activo) -->
+                    <div id="2fa-setup-section" class="hidden">
+                        <div id="2fa-qr-container" class="hidden">
+                            <p>Escanea este codigo QR con Authy o Google Authenticator:</p>
+                            <img id="2fa-qr-image" alt="QR Code" class="qr-code">
+                            <p class="form-hint">O introduce manualmente: <code id="2fa-secret"></code></p>
+                            <div class="form-group">
+                                <label for="2fa-verify-code">Codigo de verificacion</label>
+                                <input type="text" id="2fa-verify-code" placeholder="000000" maxlength="6" pattern="[0-9]{6}">
+                                <small class="form-hint">Introduce el codigo de 6 digitos para confirmar</small>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" onclick="verify2FA()">Activar 2FA</button>
+                                <button class="btn btn-secondary" onclick="cancel2FASetup()">Cancelar</button>
+                            </div>
+                        </div>
+                        <button id="btn-setup-2fa" class="btn btn-primary" onclick="setup2FA()">Configurar 2FA</button>
+                    </div>
+
+                    <!-- Desactivar 2FA (cuando esta activo) -->
+                    <div id="2fa-disable-section" class="hidden">
+                        <p class="section-description" style="color: var(--success);">2FA esta activo. Tu cuenta esta protegida.</p>
+                        <div class="form-group">
+                            <label for="2fa-disable-password">Contrasena actual</label>
+                            <input type="password" id="2fa-disable-password" placeholder="Tu contrasena">
+                        </div>
+                        <button class="btn btn-danger" onclick="disable2FA()">Desactivar 2FA</button>
                     </div>
                 </section>
 

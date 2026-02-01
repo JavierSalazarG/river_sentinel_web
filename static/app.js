@@ -240,12 +240,19 @@ async function handleLogin(e) {
 
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
+    const totpCode = document.getElementById('login-totp').value;
+    const totpGroup = document.getElementById('totp-group');
 
     try {
+        const loginData = { email, password };
+        if (totpCode) {
+            loginData.totp_code = totpCode;
+        }
+
         const response = await fetch(`${API_BASE}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify(loginData)
         });
 
         const data = await response.json();
@@ -254,16 +261,33 @@ async function handleLogin(e) {
             throw new Error(data.error || 'Error al iniciar sesion');
         }
 
+        // Verificar si requiere 2FA
+        if (data.requires_2fa) {
+            totpGroup.classList.remove('hidden');
+            document.getElementById('login-totp').focus();
+            loginError.textContent = 'Introduce el codigo de tu app de autenticacion';
+            loginError.classList.remove('hidden');
+            loginError.style.background = '#dbeafe';
+            loginError.style.color = '#1e40af';
+            return;
+        }
+
         authToken = data.token;
         currentUser = data.user;
         localStorage.setItem('authToken', authToken);
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
 
+        // Resetear formulario y ocultar 2FA
         loginForm.reset();
+        totpGroup.classList.add('hidden');
+        loginError.style.background = '';
+        loginError.style.color = '';
         showApp();
     } catch (error) {
         loginError.textContent = error.message;
         loginError.classList.remove('hidden');
+        loginError.style.background = '';
+        loginError.style.color = '';
     }
 }
 
@@ -2314,6 +2338,10 @@ window.closeCreateDeviceModal = closeCreateDeviceModal;
 window.exportData = exportData;
 window.testConnection = testConnection;
 window.clearLocalData = clearLocalData;
+window.setup2FA = setup2FA;
+window.verify2FA = verify2FA;
+window.disable2FA = disable2FA;
+window.cancel2FASetup = cancel2FASetup;
 
 // ==================== MODAL CREAR DISPOSITIVO ====================
 
@@ -2351,6 +2379,166 @@ function loadConfigSection() {
 
     // Estado de conexion
     testConnection(true);
+
+    // Cargar estado 2FA
+    load2FAStatus();
+}
+
+// ==================== 2FA ====================
+
+async function load2FAStatus() {
+    const statusEl = document.getElementById('2fa-status');
+    const setupSection = document.getElementById('2fa-setup-section');
+    const disableSection = document.getElementById('2fa-disable-section');
+
+    try {
+        const response = await fetch(`${API_BASE}/auth/2fa/status`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+
+        if (!response.ok) throw new Error('Error obteniendo estado 2FA');
+
+        const data = await response.json();
+
+        if (data.totp_enabled) {
+            statusEl.textContent = 'Activo';
+            statusEl.style.color = 'var(--success)';
+            setupSection.classList.add('hidden');
+            disableSection.classList.remove('hidden');
+        } else {
+            statusEl.textContent = 'No configurado';
+            statusEl.style.color = 'var(--warning)';
+            setupSection.classList.remove('hidden');
+            disableSection.classList.add('hidden');
+        }
+    } catch (error) {
+        statusEl.textContent = 'Error';
+        statusEl.style.color = 'var(--danger)';
+        console.error('Error loading 2FA status:', error);
+    }
+}
+
+async function setup2FA() {
+    const qrContainer = document.getElementById('2fa-qr-container');
+    const setupBtn = document.getElementById('btn-setup-2fa');
+
+    try {
+        setupBtn.disabled = true;
+        setupBtn.textContent = 'Generando...';
+
+        const response = await fetch(`${API_BASE}/auth/2fa/setup`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Error configurando 2FA');
+        }
+
+        const data = await response.json();
+
+        // Mostrar QR code
+        document.getElementById('2fa-qr-image').src = data.qr_code_b64;
+        document.getElementById('2fa-secret').textContent = data.secret;
+        qrContainer.classList.remove('hidden');
+        setupBtn.classList.add('hidden');
+
+    } catch (error) {
+        alert('Error: ' + error.message);
+        setupBtn.disabled = false;
+        setupBtn.textContent = 'Configurar 2FA';
+    }
+}
+
+function cancel2FASetup() {
+    document.getElementById('2fa-qr-container').classList.add('hidden');
+    document.getElementById('btn-setup-2fa').classList.remove('hidden');
+    document.getElementById('btn-setup-2fa').disabled = false;
+    document.getElementById('btn-setup-2fa').textContent = 'Configurar 2FA';
+    document.getElementById('2fa-verify-code').value = '';
+}
+
+async function verify2FA() {
+    const code = document.getElementById('2fa-verify-code').value;
+
+    if (!code || code.length !== 6) {
+        alert('Introduce un codigo de 6 digitos');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/auth/2fa/verify`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ code })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Codigo invalido');
+        }
+
+        alert('2FA activado correctamente!');
+        cancel2FASetup();
+        load2FAStatus();
+
+        // Actualizar usuario en cache
+        if (currentUser) {
+            currentUser.totp_enabled = true;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        }
+
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function disable2FA() {
+    const password = document.getElementById('2fa-disable-password').value;
+
+    if (!password) {
+        alert('Introduce tu contrasena para desactivar 2FA');
+        return;
+    }
+
+    if (!confirm('Estas seguro de que quieres desactivar 2FA? Tu cuenta sera menos segura.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/auth/2fa/disable`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Error desactivando 2FA');
+        }
+
+        alert('2FA desactivado');
+        document.getElementById('2fa-disable-password').value = '';
+        load2FAStatus();
+
+        // Actualizar usuario en cache
+        if (currentUser) {
+            currentUser.totp_enabled = false;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        }
+
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
 }
 
 async function testConnection(silent = false) {
