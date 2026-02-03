@@ -1038,15 +1038,20 @@ main {
 /* Catalog components */
 .component-catalog-item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     padding: 0.75rem;
     background: var(--bg);
     border-radius: 8px;
+    gap: 0.5rem;
 }
 
 .component-catalog-item .component-info {
     flex: 1;
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 .component-category {
@@ -1064,12 +1069,13 @@ main {
 /* Device components */
 .device-component-item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 1rem;
     padding: 0.75rem;
     background: var(--bg);
     border-radius: 8px;
     border-left: 3px solid var(--success);
+    min-width: 0;
 }
 
 .device-component-item.needs_repair {
@@ -1107,12 +1113,19 @@ main {
 
 .component-info {
     flex: 1;
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 .component-meta {
     font-size: 0.8rem;
     color: var(--text-muted);
     margin-top: 0.25rem;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 .component-actions {
@@ -1123,12 +1136,21 @@ main {
 /* Needs attention */
 .attention-item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 1rem;
     padding: 0.75rem;
     background: var(--bg);
     border-radius: 8px;
     border-left: 3px solid var(--warning);
+    min-width: 0;
+}
+
+.attention-info {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 .attention-item.needs_replacement {
@@ -1153,23 +1175,28 @@ main {
     background: var(--danger);
 }
 
-.attention-info {
-    flex: 1;
-}
-
 .attention-component {
     font-weight: 600;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 .attention-device {
     font-size: 0.85rem;
     color: var(--text-muted);
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 .attention-meta {
     font-size: 0.8rem;
     color: var(--text-muted);
     margin-top: 0.25rem;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 /* Status badge */
