@@ -754,7 +754,7 @@ function updateMap(devices) {
         const popupContent = `
             <div class="map-popup">
                 <h4>${escapeHtml(device.name)}</h4>
-                <p>${escapeHtml(device.description || device.device_id)}</p>
+                ${device.description ? `<p>${escapeHtml(device.description)}</p>` : ''}
                 <p>Estado: <strong>${device.status}</strong></p>
                 ${device.battery_level ? `<p>Bateria: ${device.battery_level}%</p>` : ''}
                 ${scorePercent !== null ? `
@@ -842,7 +842,7 @@ async function loadDevices() {
             <div class="device-item clickable" data-id="${device.id}" onclick="openDeviceConfigModal('${device.id}')">
                 <div class="device-info">
                     <div class="device-name">${escapeHtml(device.name)}</div>
-                    <div class="device-id">${escapeHtml(device.device_id)}</div>
+                    <div class="device-id-small">${escapeHtml(device.device_id)}</div>
                     <div class="device-meta">
                         ${device.latitude.toFixed(4)}, ${device.longitude.toFixed(4)}
                         ${device.description ? ` - ${escapeHtml(device.description)}` : ''}

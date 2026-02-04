@@ -475,16 +475,15 @@
             </div>
             <form id="create-device-form">
                 <div class="modal-body">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="device_id">ID del Dispositivo</label>
-                            <input type="text" id="device_id" name="device_id" placeholder="nodo-rio-01" required>
-                            <small class="form-hint">Identificador unico (ej: nodo-puente-01)</small>
-                        </div>
-                        <div class="form-group">
-                            <label for="name">Nombre</label>
-                            <input type="text" id="name" name="name" placeholder="Nodo Puente Viejo" required>
-                        </div>
+                    <div class="form-group">
+                        <label for="name">Nombre del dispositivo</label>
+                        <input type="text" id="name" name="name" placeholder="Nodo Puente Viejo" required>
+                        <small class="form-hint">Nombre visible en la web</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="device_id">ID Tecnico</label>
+                        <input type="text" id="device_id" name="device_id" placeholder="nodo-rio-01" required class="input-monospace">
+                        <small class="form-hint">Identificador que vincula con el ESP (debe coincidir con secrets.h)</small>
                     </div>
                     <div class="form-group">
                         <label for="description">Descripcion (opcional)</label>
