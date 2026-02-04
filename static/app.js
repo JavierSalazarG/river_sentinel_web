@@ -839,7 +839,7 @@ async function loadDevices() {
         }
 
         devicesList.innerHTML = devices.map(device => `
-            <div class="device-item ${isWorker() ? 'clickable' : ''}" data-id="${device.id}" ${isWorker() ? `onclick="openDeviceComponentsModal('${device.id}', '${escapeHtml(device.name)}')"` : ''}>
+            <div class="device-item clickable" data-id="${device.id}" onclick="openDeviceConfigModal('${device.id}')">
                 <div class="device-info">
                     <div class="device-name">${escapeHtml(device.name)}</div>
                     <div class="device-id">${escapeHtml(device.device_id)}</div>
@@ -849,13 +849,13 @@ async function loadDevices() {
                         ${device.battery_level ? ` - ${device.battery_level}%` : ''}
                     </div>
                     ${device.last_seen_at ? `<div class="device-lastseen">Ultima conexion: ${formatDate(device.last_seen_at)}</div>` : ''}
-                    ${isWorker() ? '<div class="device-hint">Click para ver componentes</div>' : ''}
+                    <div class="device-hint">Click para configurar</div>
                 </div>
                 <span class="device-status ${device.status}">${device.status}</span>
                 ${isAdmin() ? `
                     <div class="device-actions">
-                        <button class="btn btn-secondary btn-sm" onclick="openEditModal('${device.id}')">Editar</button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteDevice('${device.id}')">Eliminar</button>
+                        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openEditModal('${device.id}')">Editar</button>
+                        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteDevice('${device.id}')">Eliminar</button>
                     </div>
                 ` : ''}
             </div>
@@ -2606,3 +2606,408 @@ function clearLocalData() {
     // Cerrar sesion
     logout();
 }
+
+// ==================== CONFIGURACION DISPOSITIVO ESP ====================
+
+// Estado del modal de configuracion
+let currentConfigDeviceId = null;
+let currentConfigTab = 'info';
+let camWifiEnabled = false;
+let camWifiPending = false;
+
+// Abrir modal de configuracion
+async function openDeviceConfigModal(deviceId) {
+    currentConfigDeviceId = deviceId;
+    const device = devicesCache[deviceId];
+
+    if (!device) {
+        alert('Dispositivo no encontrado');
+        return;
+    }
+
+    // Establecer nombre en el titulo
+    document.getElementById('config-device-name').textContent = device.name;
+    document.getElementById('config-device-id').value = deviceId;
+
+    // Mostrar tab de info por defecto
+    showConfigTab('info');
+
+    // Cargar datos del dispositivo
+    await loadDeviceConfigInfo(deviceId);
+
+    // Cargar configuracion ESP si existe
+    await loadEspConfig(deviceId);
+
+    // Mostrar modal
+    document.getElementById('device-config-modal').classList.remove('hidden');
+}
+
+// Cerrar modal
+function closeDeviceConfigModal() {
+    document.getElementById('device-config-modal').classList.add('hidden');
+    currentConfigDeviceId = null;
+}
+
+// Cambiar tab
+function showConfigTab(tabName) {
+    currentConfigTab = tabName;
+
+    // Actualizar botones
+    document.querySelectorAll('.config-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.toLowerCase().includes(tabName));
+    });
+
+    // Mostrar contenido
+    document.querySelectorAll('.config-tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    document.getElementById(`config-tab-${tabName}`).classList.remove('hidden');
+}
+
+// Cargar info del dispositivo
+async function loadDeviceConfigInfo(deviceId) {
+    const device = devicesCache[deviceId];
+
+    // Info basica
+    document.getElementById('config-info-id').textContent = device.device_id;
+    document.getElementById('config-info-last-seen').textContent = device.last_seen_at
+        ? formatDate(device.last_seen_at)
+        : 'Nunca';
+    document.getElementById('config-info-battery').textContent = device.battery_level
+        ? `${device.battery_level}%`
+        : 'N/A';
+
+    // Cargar info extendida del ESP si esta disponible
+    try {
+        const response = await apiRequest('GET', `/devices/${deviceId}/esp-status`);
+        if (response.ok) {
+            const espStatus = await response.json();
+            document.getElementById('config-info-session').textContent =
+                espStatus.current_session ? `${espStatus.current_session}/3` : '-';
+            document.getElementById('config-info-boots').textContent =
+                espStatus.boot_count ?? '-';
+            document.getElementById('config-info-sleep').textContent =
+                espStatus.deep_sleep_enabled ? 'Habilitado' : 'Deshabilitado';
+
+            // Ultima deteccion
+            if (espStatus.last_detection) {
+                document.getElementById('config-info-detection').textContent =
+                    `${espStatus.last_detection.score}%`;
+                document.getElementById('config-info-detection-date').textContent =
+                    formatDate(espStatus.last_detection.date);
+            }
+        }
+    } catch (error) {
+        // Si no hay endpoint de ESP status, usar valores por defecto
+        document.getElementById('config-info-session').textContent = '-';
+        document.getElementById('config-info-boots').textContent = '-';
+        document.getElementById('config-info-sleep').textContent = '-';
+        document.getElementById('config-info-detection').textContent = '-';
+        document.getElementById('config-info-detection-date').textContent = '-';
+    }
+
+    // Cargar ultima deteccion desde el endpoint normal
+    try {
+        const detResponse = await apiRequest('GET', `/detections?device_id=${deviceId}&limit=1`);
+        if (detResponse.ok) {
+            const detections = await detResponse.json();
+            if (detections.length > 0) {
+                const det = detections[0];
+                document.getElementById('config-info-detection').textContent =
+                    `${Math.round(det.detection_score * 100)}%`;
+                document.getElementById('config-info-detection-date').textContent =
+                    formatDate(det.detected_at);
+            }
+        }
+    } catch (error) {
+        // Ignorar errores
+    }
+}
+
+// Cargar configuracion ESP
+async function loadEspConfig(deviceId) {
+    try {
+        const response = await apiRequest('GET', `/devices/${deviceId}/config`);
+        if (response.ok) {
+            const config = await response.json();
+
+            // Horarios
+            if (config.wake_hours && config.wake_hours.length >= 3) {
+                document.getElementById('config-hour-1').value = config.wake_hours[0];
+                document.getElementById('config-hour-2').value = config.wake_hours[1];
+                document.getElementById('config-hour-3').value = config.wake_hours[2];
+            }
+
+            // Fotos
+            if (config.photos_per_session) {
+                document.getElementById('config-photos-count').value = config.photos_per_session;
+            }
+            if (config.photo_interval_min) {
+                document.getElementById('config-photos-interval').value = config.photo_interval_min;
+            }
+
+            // Deep sleep
+            document.getElementById('config-sleep-enabled').checked =
+                config.deep_sleep_enabled !== false;
+
+            // Estado WiFi CAM
+            updateCamWifiStatus(config.cam_wifi_enabled, config.cam_wifi_pending);
+
+            // Stats SD
+            if (config.sd_stats) {
+                document.getElementById('config-sd-used').textContent =
+                    formatBytes(config.sd_stats.used_bytes);
+                document.getElementById('config-sd-free').textContent =
+                    formatBytes(config.sd_stats.free_bytes);
+                document.getElementById('config-sd-images').textContent =
+                    config.sd_stats.total_images ?? '-';
+                document.getElementById('config-sd-days').textContent =
+                    config.sd_stats.days_stored ?? '-';
+            }
+        }
+    } catch (error) {
+        // Usar valores por defecto si no hay config guardada
+        console.log('No hay configuracion ESP guardada, usando valores por defecto');
+    }
+}
+
+// Guardar configuracion ESP
+async function saveEspConfig(event) {
+    event.preventDefault();
+
+    const config = {
+        wake_hours: [
+            parseInt(document.getElementById('config-hour-1').value),
+            parseInt(document.getElementById('config-hour-2').value),
+            parseInt(document.getElementById('config-hour-3').value)
+        ],
+        photos_per_session: parseInt(document.getElementById('config-photos-count').value),
+        photo_interval_min: parseInt(document.getElementById('config-photos-interval').value),
+        deep_sleep_enabled: document.getElementById('config-sleep-enabled').checked
+    };
+
+    // Validar horarios
+    if (config.wake_hours.some(h => h < 0 || h > 23)) {
+        alert('Las horas deben estar entre 0 y 23');
+        return;
+    }
+
+    // Validar que los horarios esten ordenados
+    if (config.wake_hours[0] >= config.wake_hours[1] ||
+        config.wake_hours[1] >= config.wake_hours[2]) {
+        alert('Los horarios deben estar en orden ascendente');
+        return;
+    }
+
+    try {
+        const response = await apiRequest('PUT', `/devices/${currentConfigDeviceId}/config`, config);
+        if (response.ok) {
+            alert('Configuracion guardada. Se aplicara en la proxima conexion del dispositivo.');
+            logToConsole('PUT', `/devices/${currentConfigDeviceId}/config`, 200, config);
+        } else {
+            const error = await response.json();
+            alert('Error guardando configuracion: ' + (error.detail || 'Error desconocido'));
+        }
+    } catch (error) {
+        alert('Error de conexion: ' + error.message);
+    }
+}
+
+// Restaurar configuracion por defecto
+function resetEspConfig() {
+    if (!confirm('Restaurar valores por defecto?')) return;
+
+    document.getElementById('config-hour-1').value = 9;
+    document.getElementById('config-hour-2').value = 15;
+    document.getElementById('config-hour-3').value = 18;
+    document.getElementById('config-photos-count').value = 3;
+    document.getElementById('config-photos-interval').value = 3;
+    document.getElementById('config-sleep-enabled').checked = true;
+}
+
+// Actualizar estado WiFi CAM
+function updateCamWifiStatus(enabled, pending) {
+    camWifiEnabled = enabled;
+    camWifiPending = pending;
+
+    const statusBox = document.getElementById('cam-wifi-status');
+    const indicator = statusBox.querySelector('.wifi-indicator');
+    const stateText = statusBox.querySelector('.wifi-state');
+    const hintText = statusBox.querySelector('.wifi-hint');
+
+    const btnEnable = document.getElementById('btn-enable-cam-wifi');
+    const btnDisable = document.getElementById('btn-disable-cam-wifi');
+
+    if (enabled) {
+        indicator.className = 'wifi-indicator online';
+        stateText.textContent = 'WiFi Habilitado';
+        hintText.textContent = 'La CAM tiene WiFi activo. Puedes conectarte para gestionar imagenes.';
+        btnEnable.classList.add('hidden');
+        btnDisable.classList.remove('hidden');
+    } else if (pending) {
+        indicator.className = 'wifi-indicator pending';
+        stateText.textContent = 'Pendiente de activacion';
+        hintText.textContent = 'El comando se enviara cuando el Gateway conecte con la CAM.';
+        btnEnable.classList.add('hidden');
+        btnDisable.classList.remove('hidden');
+        btnDisable.textContent = 'Cancelar';
+    } else {
+        indicator.className = 'wifi-indicator offline';
+        stateText.textContent = 'WiFi Deshabilitado';
+        hintText.textContent = 'La CAM esta en modo deep sleep o WiFi apagado.';
+        btnEnable.classList.remove('hidden');
+        btnDisable.classList.add('hidden');
+        btnDisable.textContent = 'Deshabilitar WiFi';
+    }
+}
+
+// Habilitar WiFi de la CAM
+async function enableCamWifi() {
+    if (!confirm('Habilitar WiFi de la CAM?\n\nEl comando se enviara al Gateway, que lo reenviara a la CAM en la proxima sesion.\n\nEl WiFi estara activo maximo 30 minutos.')) {
+        return;
+    }
+
+    try {
+        const response = await apiRequest('POST', `/devices/${currentConfigDeviceId}/enable-cam-wifi`);
+        if (response.ok) {
+            updateCamWifiStatus(false, true);
+            alert('Comando enviado. El WiFi se activara en la proxima sesion del dispositivo.');
+            logToConsole('POST', `/devices/${currentConfigDeviceId}/enable-cam-wifi`, 200);
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.detail || 'No se pudo enviar el comando'));
+        }
+    } catch (error) {
+        alert('Error de conexion: ' + error.message);
+    }
+}
+
+// Deshabilitar WiFi de la CAM
+async function disableCamWifi() {
+    const action = camWifiPending ? 'Cancelar comando pendiente' : 'Deshabilitar WiFi de la CAM';
+    if (!confirm(`${action}?`)) {
+        return;
+    }
+
+    try {
+        const response = await apiRequest('POST', `/devices/${currentConfigDeviceId}/disable-cam-wifi`);
+        if (response.ok) {
+            updateCamWifiStatus(false, false);
+            alert(camWifiPending ? 'Comando cancelado' : 'WiFi deshabilitado');
+            logToConsole('POST', `/devices/${currentConfigDeviceId}/disable-cam-wifi`, 200);
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.detail || 'No se pudo completar la accion'));
+        }
+    } catch (error) {
+        alert('Error de conexion: ' + error.message);
+    }
+}
+
+// Refrescar imagenes de la CAM
+async function refreshCamImages() {
+    if (!camWifiEnabled) {
+        alert('El WiFi de la CAM no esta habilitado');
+        return;
+    }
+
+    const grid = document.getElementById('cam-images-grid');
+    grid.innerHTML = '<p class="empty-state">Cargando imagenes...</p>';
+
+    try {
+        const response = await apiRequest('GET', `/devices/${currentConfigDeviceId}/cam-images`);
+        if (response.ok) {
+            const data = await response.json();
+
+            // Actualizar selector de carpetas
+            const folderSelect = document.getElementById('cam-images-folder');
+            folderSelect.innerHTML = '<option value="">Todas las carpetas</option>';
+            if (data.folders) {
+                data.folders.forEach(folder => {
+                    folderSelect.innerHTML += `<option value="${folder}">${folder}</option>`;
+                });
+            }
+
+            // Mostrar imagenes
+            if (data.images && data.images.length > 0) {
+                grid.innerHTML = data.images.map(img => `
+                    <div class="image-thumb" onclick="viewCamImage('${img.path}')">
+                        <img src="${img.thumbnail || img.url}" alt="${img.name}" loading="lazy">
+                        <div class="image-date">${img.date || img.name}</div>
+                    </div>
+                `).join('');
+            } else {
+                grid.innerHTML = '<p class="empty-state">No hay imagenes</p>';
+            }
+
+            // Actualizar stats
+            if (data.stats) {
+                document.getElementById('config-sd-used').textContent =
+                    formatBytes(data.stats.used_bytes);
+                document.getElementById('config-sd-free').textContent =
+                    formatBytes(data.stats.free_bytes);
+                document.getElementById('config-sd-images').textContent =
+                    data.stats.total_images ?? '-';
+                document.getElementById('config-sd-days').textContent =
+                    data.stats.days_stored ?? '-';
+            }
+        } else {
+            grid.innerHTML = '<p class="empty-state">Error cargando imagenes</p>';
+        }
+    } catch (error) {
+        grid.innerHTML = '<p class="empty-state">Error de conexion</p>';
+    }
+}
+
+// Ver imagen de la CAM
+function viewCamImage(path) {
+    // Abrir imagen en nueva ventana o modal
+    window.open(`${API_BASE}/devices/${currentConfigDeviceId}/cam-image?path=${encodeURIComponent(path)}`, '_blank');
+}
+
+// Eliminar imagenes antiguas
+async function deleteOldImages() {
+    const days = prompt('Eliminar imagenes con mas de X dias de antiguedad:', '30');
+    if (!days) return;
+
+    const daysNum = parseInt(days);
+    if (isNaN(daysNum) || daysNum < 1) {
+        alert('Introduce un numero valido de dias');
+        return;
+    }
+
+    if (!confirm(`Eliminar todas las imagenes con mas de ${daysNum} dias?\n\nEsta accion no se puede deshacer.`)) {
+        return;
+    }
+
+    try {
+        const response = await apiRequest('DELETE', `/devices/${currentConfigDeviceId}/cam-images?older_than_days=${daysNum}`);
+        if (response.ok) {
+            const result = await response.json();
+            alert(`Eliminadas ${result.deleted_count} imagenes`);
+            refreshCamImages();
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.detail || 'No se pudieron eliminar las imagenes'));
+        }
+    } catch (error) {
+        alert('Error de conexion: ' + error.message);
+    }
+}
+
+// Formato de bytes
+function formatBytes(bytes) {
+    if (!bytes || bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Event listener para formulario de config
+document.addEventListener('DOMContentLoaded', () => {
+    const espConfigForm = document.getElementById('esp-config-form');
+    if (espConfigForm) {
+        espConfigForm.addEventListener('submit', saveEspConfig);
+    }
+});

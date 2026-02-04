@@ -594,6 +594,201 @@
         </div>
     </div>
 
+    <!-- Modal para configuracion de dispositivo ESP -->
+    <div id="device-config-modal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>Configuracion: <span id="config-device-name">Dispositivo</span></h3>
+                <button class="modal-close" onclick="closeDeviceConfigModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="config-device-id">
+
+                <!-- Tabs -->
+                <div class="config-tabs">
+                    <button class="config-tab active" onclick="showConfigTab('info')">Info</button>
+                    <button class="config-tab" onclick="showConfigTab('config')">Configuracion</button>
+                    <button class="config-tab" onclick="showConfigTab('images')">Imagenes CAM</button>
+                </div>
+
+                <!-- Tab: Info -->
+                <div id="config-tab-info" class="config-tab-content">
+                    <div class="config-section">
+                        <h4>Estado del Sistema</h4>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">ID</span>
+                                <span class="info-value" id="config-info-id">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Ultima conexion</span>
+                                <span class="info-value" id="config-info-last-seen">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Bateria Gateway</span>
+                                <span class="info-value" id="config-info-battery">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Sesion actual</span>
+                                <span class="info-value" id="config-info-session">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Boots totales</span>
+                                <span class="info-value" id="config-info-boots">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Deep Sleep</span>
+                                <span class="info-value" id="config-info-sleep">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="config-section">
+                        <h4>Ultima Deteccion</h4>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Resultado</span>
+                                <span class="info-value" id="config-info-detection">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Fecha</span>
+                                <span class="info-value" id="config-info-detection-date">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Configuracion -->
+                <div id="config-tab-config" class="config-tab-content hidden">
+                    <form id="esp-config-form">
+                        <div class="config-section">
+                            <h4>Horarios de Sesion</h4>
+                            <p class="form-hint">Define las 3 horas del dia en que el sistema se despertara para tomar fotos</p>
+                            <div class="session-times">
+                                <div class="session-time">
+                                    <label>Sesion 1</label>
+                                    <div class="time-input">
+                                        <input type="number" id="config-hour-1" min="0" max="23" value="9">
+                                        <span>:</span>
+                                        <input type="number" id="config-min-1" min="0" max="59" value="0" disabled>
+                                    </div>
+                                </div>
+                                <div class="session-time">
+                                    <label>Sesion 2</label>
+                                    <div class="time-input">
+                                        <input type="number" id="config-hour-2" min="0" max="23" value="15">
+                                        <span>:</span>
+                                        <input type="number" id="config-min-2" min="0" max="59" value="0" disabled>
+                                    </div>
+                                </div>
+                                <div class="session-time">
+                                    <label>Sesion 3 (envio)</label>
+                                    <div class="time-input">
+                                        <input type="number" id="config-hour-3" min="0" max="23" value="18">
+                                        <span>:</span>
+                                        <input type="number" id="config-min-3" min="0" max="59" value="0" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="config-section">
+                            <h4>Fotos por Sesion</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="config-photos-count">Cantidad de fotos</label>
+                                    <input type="number" id="config-photos-count" min="1" max="10" value="3">
+                                </div>
+                                <div class="form-group">
+                                    <label for="config-photos-interval">Intervalo (minutos)</label>
+                                    <input type="number" id="config-photos-interval" min="1" max="30" value="3">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="config-section">
+                            <h4>Deep Sleep</h4>
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="config-sleep-enabled" checked>
+                                    <span>Habilitar deep sleep entre sesiones</span>
+                                </label>
+                                <p class="form-hint">Reduce el consumo de bateria durmiendo entre sesiones</p>
+                            </div>
+                        </div>
+
+                        <div class="modal-actions">
+                            <button type="button" class="btn btn-secondary" onclick="resetEspConfig()">Restaurar</button>
+                            <button type="submit" class="btn btn-primary">Guardar Configuracion</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tab: Imagenes CAM -->
+                <div id="config-tab-images" class="config-tab-content hidden">
+                    <div class="config-section">
+                        <h4>WiFi de la CAM</h4>
+                        <div class="wifi-status-box" id="cam-wifi-status">
+                            <div class="wifi-indicator offline"></div>
+                            <div class="wifi-info">
+                                <span class="wifi-state">WiFi Deshabilitado</span>
+                                <span class="wifi-hint">La CAM esta en modo deep sleep o WiFi apagado</span>
+                            </div>
+                        </div>
+                        <div class="wifi-actions">
+                            <button class="btn btn-primary" id="btn-enable-cam-wifi" onclick="enableCamWifi()">
+                                Habilitar WiFi CAM
+                            </button>
+                            <button class="btn btn-danger hidden" id="btn-disable-cam-wifi" onclick="disableCamWifi()">
+                                Deshabilitar WiFi
+                            </button>
+                        </div>
+                        <div class="wifi-warning">
+                            <strong>Nota:</strong> Al habilitar el WiFi, la CAM creara una red temporal.
+                            El Gateway enviara el comando en la proxima conexion.
+                            Duracion maxima: 30 minutos (luego se apaga automaticamente).
+                        </div>
+                    </div>
+
+                    <div class="config-section" id="cam-images-section">
+                        <h4>Imagenes en SD</h4>
+                        <div class="images-toolbar">
+                            <button class="btn btn-secondary btn-sm" onclick="refreshCamImages()">Actualizar</button>
+                            <select id="cam-images-folder">
+                                <option value="">Selecciona carpeta...</option>
+                            </select>
+                            <button class="btn btn-danger btn-sm" onclick="deleteOldImages()">Limpiar antiguas</button>
+                        </div>
+                        <div id="cam-images-grid" class="images-grid">
+                            <p class="empty-state">Habilita el WiFi de la CAM para ver las imagenes</p>
+                        </div>
+                    </div>
+
+                    <div class="config-section">
+                        <h4>Estadisticas SD</h4>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Espacio usado</span>
+                                <span class="info-value" id="config-sd-used">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Espacio libre</span>
+                                <span class="info-value" id="config-sd-free">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Total imagenes</span>
+                                <span class="info-value" id="config-sd-images">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Dias guardados</span>
+                                <span class="info-value" id="config-sd-days">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal para componente de dispositivo -->
     <div id="component-modal" class="modal hidden">
         <div class="modal-content">
