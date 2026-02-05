@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>River Sentinel - Vigilancia Ambiental</title>
+    <meta name="description" content="Estación de vigilancia ambiental River Sentinel. Monitorización de zonas de difícil acceso para la detección de vertederos ilegales y acumulación de residuos.">
+    <meta name="robots" content="noindex, nofollow">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --primary-light: #dbeafe;
+            --accent: #0ea5e9;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --text-light: #94a3b8;
+            --bg: #f8fafc;
+            --white: #ffffff;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* ========== HERO ========== */
+        .hero {
+            position: relative;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #0ea5e9 100%);
+            color: white;
+            padding: 3rem 1.5rem 4rem;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='0.05' d='M0,160L48,170.7C96,181,192,203,288,192C384,181,480,139,576,138.7C672,139,768,181,864,181.3C960,181,1056,139,1152,122.7C1248,107,1344,117,1392,122.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E") no-repeat bottom;
+            background-size: cover;
+            pointer-events: none;
+        }
+
+        .hero-icon {
+            width: 250px;
+            height: 250px;
+            margin: 0 auto 1.5rem;
+        }
+
+        .hero-icon img {
+            width: 250px;
+            height: 250px;
+            object-fit: contain;
+        }
+
+        .hero h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+            position: relative;
+        }
+
+        .hero .subtitle {
+            font-size: 1.05rem;
+            opacity: 0.9;
+            font-weight: 400;
+            position: relative;
+        }
+
+        .hero-wave {
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            line-height: 0;
+        }
+
+        .hero-wave svg {
+            display: block;
+            width: 100%;
+            height: 40px;
+        }
+
+        /* ========== INTRO ========== */
+        .intro {
+            max-width: 640px;
+            margin: -1.5rem auto 0;
+            padding: 0 1.5rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .intro-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 2rem 1.5rem;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        .intro-card h2 {
+            font-size: 1.25rem;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+        }
+
+        .intro-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.8;
+        }
+
+        /* ========== SECTIONS ========== */
+        .section {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title .icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .section-title .icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* ========== HOW IT WORKS ========== */
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .step {
+            background: var(--white);
+            border-radius: 14px;
+            padding: 1.5rem;
+            display: flex;
+            gap: 1.25rem;
+            align-items: flex-start;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            border: 1px solid var(--border);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .step:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+
+        .step-number {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .step-number svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .step-number.sensors {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        }
+        .step-number.sensors svg { fill: #2563eb; }
+
+        .step-number.camera {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+        }
+        .step-number.camera svg { fill: #059669; }
+
+        .step-number.transmit {
+            background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+        }
+        .step-number.transmit svg { fill: #4f46e5; }
+
+        .step-number.alert {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+        }
+        .step-number.alert svg { fill: #d97706; }
+
+        .step-content h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            color: var(--text);
+        }
+
+        .step-content p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* ========== IMAGE PLACEHOLDER ========== */
+        .image-placeholder {
+            width: 100%;
+            border-radius: 14px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+            border: 2px dashed var(--border);
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1.5rem;
+            text-align: center;
+            min-height: 200px;
+        }
+
+        .image-placeholder svg {
+            width: 48px;
+            height: 48px;
+            fill: var(--text-light);
+            margin-bottom: 0.75rem;
+        }
+
+        .image-placeholder span {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .image-placeholder.has-image {
+            border: none;
+            padding: 0;
+            min-height: auto;
+        }
+
+        .image-placeholder.has-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* ========== WHO MANAGES ========== */
+        .org-card {
+            background: var(--white);
+            border-radius: 14px;
+            padding: 1.75rem 1.5rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            border: 1px solid var(--border);
+        }
+
+        .org-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .org-logo {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .org-logo img {
+            width: 56px;
+            height: 56px;
+            object-fit: cover;
+        }
+
+        .org-name h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .org-name span {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .org-description {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 1.25rem;
+        }
+
+        .org-contact {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+
+        .contact-item svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .contact-item a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .contact-item a:hover {
+            text-decoration: underline;
+        }
+
+        /* ========== WARNING ========== */
+        .warning-section {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 0 1.5rem 2.5rem;
+        }
+
+        .warning-card {
+            background: linear-gradient(135deg, #fefce8, #fef9c3);
+            border: 1px solid #fde68a;
+            border-radius: 14px;
+            padding: 1.75rem 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .warning-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: #fbbf24;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .warning-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: #78350f;
+        }
+
+        .warning-content h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 0.3rem;
+        }
+
+        .warning-content p {
+            font-size: 0.9rem;
+            color: #a16207;
+            line-height: 1.6;
+        }
+
+        /* ========== FOOTER ========== */
+        .footer {
+            text-align: center;
+            padding: 2rem 1.5rem;
+            border-top: 1px solid var(--border);
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        .footer p {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .footer .brand {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (min-width: 480px) {
+            .hero {
+                padding: 4rem 2rem 5rem;
+            }
+
+            .hero h1 {
+                font-size: 2.4rem;
+            }
+
+            .intro-card {
+                padding: 2.5rem 2rem;
+            }
+
+            .step {
+                padding: 1.75rem;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .hero {
+                padding: 5rem 2rem 6rem;
+            }
+
+            .hero h1 {
+                font-size: 2.8rem;
+            }
+
+            .hero-wave svg {
+                height: 60px;
+            }
+
+            .section {
+                padding: 3rem 2rem;
+            }
+        }
+
+        /* ========== ANIMATIONS ========== */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .intro-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .step:nth-child(1) { animation: fadeInUp 0.5s ease-out 0.1s both; }
+        .step:nth-child(2) { animation: fadeInUp 0.5s ease-out 0.2s both; }
+        .step:nth-child(3) { animation: fadeInUp 0.5s ease-out 0.3s both; }
+        .step:nth-child(4) { animation: fadeInUp 0.5s ease-out 0.4s both; }
+    </style>
+</head>
+<body>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-icon">
+            <img src="../static/logo.png" alt="River Sentinel">
+        </div>
+        <h1>River Sentinel</h1>
+        <p class="subtitle">Vigilancia Ambiental en Zonas de Difícil Acceso</p>
+        <div class="hero-wave">
+            <svg viewBox="0 0 1440 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#f8fafc" d="M0,20 C360,40 720,0 1080,20 C1260,30 1380,25 1440,20 L1440,40 L0,40 Z"/>
+            </svg>
+        </div>
+    </section>
+
+    <!-- INTRO -->
+    <div class="intro">
+        <div class="intro-card">
+            <h2>Has encontrado una estación de vigilancia ambiental</h2>
+            <p>
+                Este dispositivo forma parte de la red <strong>River Sentinel</strong>,
+                un sistema de vigilancia ambiental que monitoriza zonas de difícil acceso
+                para detectar vertederos ilegales, acumulación de residuos y otras
+                alteraciones del entorno natural.
+            </p>
+        </div>
+    </div>
+
+    <!-- PHOTO: DEVICE IN THE FIELD -->
+    <div class="section">
+        <!-- ============================================================
+             PLACEHOLDER: Foto del dispositivo instalado en el campo.
+             Reemplaza este div por una <img> cuando tengas la foto.
+             Tamaño recomendado: 1200x600px, formato JPG/WebP.
+             Ejemplo: <div class="image-placeholder has-image">
+                        <img src="ruta/foto-dispositivo.jpg" alt="...">
+                      </div>
+             ============================================================ -->
+        <div class="image-placeholder">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+            </svg>
+            <span>Foto del dispositivo instalado en la zona</span>
+        </div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="section" style="padding-top: 0;">
+        <h2 class="section-title">
+            <span class="icon" style="background: var(--primary-light);">
+                <svg viewBox="0 0 24 24" fill="var(--primary)" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1112 8.4a3.6 3.6 0 010 7.2z"/>
+                </svg>
+            </span>
+            ¿Cómo funciona?
+        </h2>
+
+        <div class="steps">
+            <!-- Step 1: Detection -->
+            <div class="step">
+                <div class="step-number sensors">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                    </svg>
+                </div>
+                <div class="step-content">
+                    <h3>Detección continua</h3>
+                    <p>Vigila la zona de forma ininterrumpida, detectando cambios en el entorno que puedan indicar vertidos, acumulación de residuos u otras alteraciones ambientales.</p>
+                </div>
+            </div>
+
+            <!-- Step 2: Camera -->
+            <div class="step">
+                <div class="step-number camera">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 10.8a3.2 3.2 0 100 6.4 3.2 3.2 0 000-6.4zm6-4.8h-2.46l-1.33-1.5c-.25-.28-.62-.5-1.01-.5h-2.4c-.39 0-.76.22-1.01.5L8.46 6H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 12c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
+                    </svg>
+                </div>
+                <div class="step-content">
+                    <h3>Captura visual</h3>
+                    <p>Una cámara integrada toma fotografías periódicas de la zona, permitiendo identificar visualmente la aparición de residuos, vertederos ilegales o cualquier actividad sospechosa.</p>
+                </div>
+            </div>
+
+            <!-- Step 3: Transmit -->
+            <div class="step">
+                <div class="step-number transmit">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/>
+                    </svg>
+                </div>
+                <div class="step-content">
+                    <h3>Transmisión de datos</h3>
+                    <p>Las imágenes y los datos recopilados se envían automáticamente a un sistema central, donde se procesan para detectar posibles incidencias de forma temprana.</p>
+                </div>
+            </div>
+
+            <!-- Step 4: Alerts -->
+            <div class="step">
+                <div class="step-number alert">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                    </svg>
+                </div>
+                <div class="step-content">
+                    <h3>Alertas y respuesta</h3>
+                    <p>Cuando se detecta una irregularidad, el sistema genera alertas para que el equipo responsable pueda intervenir a tiempo y evitar daños mayores al medio ambiente.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PHOTO: RIVER / ENVIRONMENT -->
+    <div class="section" style="padding-top: 0;">
+        <!-- ============================================================
+             PLACEHOLDER: Foto panorámica del entorno vigilado.
+             Reemplaza este div por una <img> cuando tengas la foto.
+             Tamaño recomendado: 1200x500px, formato JPG/WebP.
+             ============================================================ -->
+        <div class="image-placeholder">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14 6l-3.75 5 2.85 3.8-1.6 1.2C9.81 13.75 7 10 7 10l-6 8h22L14 6z"/>
+            </svg>
+            <span>Foto panorámica del entorno vigilado</span>
+        </div>
+    </div>
+
+    <!-- WHO MANAGES -->
+    <div class="section" style="padding-top: 0;">
+        <h2 class="section-title">
+            <span class="icon" style="background: #d1fae5;">
+                <svg viewBox="0 0 24 24" fill="#059669" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                </svg>
+            </span>
+            ¿Quién lo gestiona?
+        </h2>
+
+        <div class="org-card">
+            <div class="org-header">
+                <!-- ============================================================
+                     PLACEHOLDER: Logo de la organización.
+                     Reemplaza el div .org-logo por un <img> si tienes logo.
+                     Tamaño recomendado: 112x112px, formato PNG/SVG.
+                     ============================================================ -->
+                <div class="org-logo">
+                    <img src="../static/logo.png" alt="River Sentinel">
+                </div>
+                <div class="org-name">
+                    <h3>River Sentinel</h3>
+                    <span>Vigilancia Ambiental</span>
+                </div>
+            </div>
+
+            <p class="org-description">
+                River Sentinel es un proyecto de vigilancia ambiental que utiliza tecnología IoT
+                para proteger el medio ambiente. Mediante estaciones autónomas ubicadas en zonas
+                de difícil acceso, monitorizamos puntos vulnerables a la creación de vertederos
+                ilegales y acumulación de residuos, contribuyendo a la detección temprana de
+                estas actividades y a la conservación del entorno natural.
+            </p>
+
+            <div class="org-contact">
+                <!-- Actualiza estos datos de contacto -->
+                <div class="contact-item">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                    </svg>
+                    <!-- TODO: Reemplaza con email real -->
+                    <a href="mailto:contacto@riversentinel.com">contacto@riversentinel.com</a>
+                </div>
+                <div class="contact-item">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                    <!-- TODO: Reemplaza con ubicación real -->
+                    <span>Zona de vigilancia ambiental</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WARNING -->
+    <div class="warning-section">
+        <div class="warning-card">
+            <div class="warning-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                </svg>
+            </div>
+            <div class="warning-content">
+                <h3>Por favor, no manipules este equipo</h3>
+                <p>
+                    Esta estación contiene sensores y cámaras que trabajan de forma autónoma.
+                    Moverla, golpearla o alterarla puede comprometer la vigilancia de la zona
+                    y dificultar la detección de actividades contaminantes. Si observas algún
+                    daño o situación anormal, te agradeceríamos que nos lo comuniques.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <p><span class="brand">River Sentinel</span> &middot; Protegiendo el medio ambiente</p>
+    </footer>
+
+</body>
+</html>
