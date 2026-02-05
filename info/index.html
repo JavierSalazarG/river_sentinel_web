@@ -39,6 +39,39 @@
             overflow-x: hidden;
         }
 
+        /* ========== LANG SWITCHER ========== */
+        .lang-switcher {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+
+        .lang-btn {
+            background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            padding: 0.35rem 0.75rem;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .lang-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        .lang-btn.active {
+            background: white;
+            color: var(--primary);
+            border-color: white;
+        }
+
         /* ========== HERO ========== */
         .hero {
             position: relative;
@@ -489,11 +522,15 @@
 
     <!-- HERO -->
     <section class="hero">
+        <div class="lang-switcher">
+            <button class="lang-btn active" onclick="setLang('es')">ES</button>
+            <button class="lang-btn" onclick="setLang('en')">EN</button>
+        </div>
         <div class="hero-icon">
             <img src="../static/logo.png" alt="River Sentinel">
         </div>
         <h1>River Sentinel</h1>
-        <p class="subtitle">Vigilancia Ambiental en Zonas de Difícil Acceso</p>
+        <p class="subtitle" data-i18n="subtitle">Vigilancia Ambiental en Zonas de Difícil Acceso</p>
         <div class="hero-wave">
             <svg viewBox="0 0 1440 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
                 <path fill="#f8fafc" d="M0,20 C360,40 720,0 1080,20 C1260,30 1380,25 1440,20 L1440,40 L0,40 Z"/>
@@ -504,8 +541,8 @@
     <!-- INTRO -->
     <div class="intro">
         <div class="intro-card">
-            <h2>Has encontrado una estación de vigilancia ambiental</h2>
-            <p>
+            <h2 data-i18n="introTitle">Has encontrado una estación de vigilancia ambiental</h2>
+            <p data-i18n="introText" data-i18n-html>
                 Este dispositivo forma parte de la red <strong>River Sentinel</strong>,
                 un sistema de vigilancia ambiental que monitoriza zonas de difícil acceso
                 para detectar vertederos ilegales, acumulación de residuos y otras
@@ -516,19 +553,11 @@
 
     <!-- PHOTO: DEVICE IN THE FIELD -->
     <div class="section">
-        <!-- ============================================================
-             PLACEHOLDER: Foto del dispositivo instalado en el campo.
-             Reemplaza este div por una <img> cuando tengas la foto.
-             Tamaño recomendado: 1200x600px, formato JPG/WebP.
-             Ejemplo: <div class="image-placeholder has-image">
-                        <img src="ruta/foto-dispositivo.jpg" alt="...">
-                      </div>
-             ============================================================ -->
         <div class="image-placeholder">
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
             </svg>
-            <span>Foto del dispositivo instalado en la zona</span>
+            <span data-i18n="imgDevice">Foto del dispositivo instalado en la zona</span>
         </div>
     </div>
 
@@ -540,11 +569,10 @@
                     <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1112 8.4a3.6 3.6 0 010 7.2z"/>
                 </svg>
             </span>
-            ¿Cómo funciona?
+            <span data-i18n="howTitle">¿Cómo funciona?</span>
         </h2>
 
         <div class="steps">
-            <!-- Step 1: Detection -->
             <div class="step">
                 <div class="step-number sensors">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -552,12 +580,11 @@
                     </svg>
                 </div>
                 <div class="step-content">
-                    <h3>Detección continua</h3>
-                    <p>Vigila la zona de forma ininterrumpida, detectando cambios en el entorno que puedan indicar vertidos, acumulación de residuos u otras alteraciones ambientales.</p>
+                    <h3 data-i18n="step1Title">Detección continua</h3>
+                    <p data-i18n="step1Text">Vigila la zona de forma ininterrumpida, detectando cambios en el entorno que puedan indicar vertidos, acumulación de residuos u otras alteraciones ambientales.</p>
                 </div>
             </div>
 
-            <!-- Step 2: Camera -->
             <div class="step">
                 <div class="step-number camera">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -565,12 +592,11 @@
                     </svg>
                 </div>
                 <div class="step-content">
-                    <h3>Captura visual</h3>
-                    <p>Una cámara integrada toma fotografías periódicas de la zona, permitiendo identificar visualmente la aparición de residuos, vertederos ilegales o cualquier actividad sospechosa.</p>
+                    <h3 data-i18n="step2Title">Captura visual</h3>
+                    <p data-i18n="step2Text">Una cámara integrada toma fotografías periódicas de la zona, permitiendo identificar visualmente la aparición de residuos, vertederos ilegales o cualquier actividad sospechosa.</p>
                 </div>
             </div>
 
-            <!-- Step 3: Transmit -->
             <div class="step">
                 <div class="step-number transmit">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -578,12 +604,11 @@
                     </svg>
                 </div>
                 <div class="step-content">
-                    <h3>Transmisión de datos</h3>
-                    <p>Las imágenes y los datos recopilados se envían automáticamente a un sistema central, donde se procesan para detectar posibles incidencias de forma temprana.</p>
+                    <h3 data-i18n="step3Title">Transmisión de datos</h3>
+                    <p data-i18n="step3Text">Las imágenes y los datos recopilados se envían automáticamente a un sistema central, donde se procesan para detectar posibles incidencias de forma temprana.</p>
                 </div>
             </div>
 
-            <!-- Step 4: Alerts -->
             <div class="step">
                 <div class="step-number alert">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -591,25 +616,20 @@
                     </svg>
                 </div>
                 <div class="step-content">
-                    <h3>Alertas y respuesta</h3>
-                    <p>Cuando se detecta una irregularidad, el sistema genera alertas para que el equipo responsable pueda intervenir a tiempo y evitar daños mayores al medio ambiente.</p>
+                    <h3 data-i18n="step4Title">Alertas y respuesta</h3>
+                    <p data-i18n="step4Text">Cuando se detecta una irregularidad, el sistema genera alertas para que el equipo responsable pueda intervenir a tiempo y evitar daños mayores al medio ambiente.</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- PHOTO: RIVER / ENVIRONMENT -->
+    <!-- PHOTO: ENVIRONMENT -->
     <div class="section" style="padding-top: 0;">
-        <!-- ============================================================
-             PLACEHOLDER: Foto panorámica del entorno vigilado.
-             Reemplaza este div por una <img> cuando tengas la foto.
-             Tamaño recomendado: 1200x500px, formato JPG/WebP.
-             ============================================================ -->
         <div class="image-placeholder">
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M14 6l-3.75 5 2.85 3.8-1.6 1.2C9.81 13.75 7 10 7 10l-6 8h22L14 6z"/>
             </svg>
-            <span>Foto panorámica del entorno vigilado</span>
+            <span data-i18n="imgEnvironment">Foto panorámica del entorno vigilado</span>
         </div>
     </div>
 
@@ -621,26 +641,21 @@
                     <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
                 </svg>
             </span>
-            ¿Quién lo gestiona?
+            <span data-i18n="whoTitle">¿Quién lo gestiona?</span>
         </h2>
 
         <div class="org-card">
             <div class="org-header">
-                <!-- ============================================================
-                     PLACEHOLDER: Logo de la organización.
-                     Reemplaza el div .org-logo por un <img> si tienes logo.
-                     Tamaño recomendado: 112x112px, formato PNG/SVG.
-                     ============================================================ -->
                 <div class="org-logo">
                     <img src="../static/logo.png" alt="River Sentinel">
                 </div>
                 <div class="org-name">
                     <h3>River Sentinel</h3>
-                    <span>Vigilancia Ambiental</span>
+                    <span data-i18n="orgSubtitle">Vigilancia Ambiental</span>
                 </div>
             </div>
 
-            <p class="org-description">
+            <p class="org-description" data-i18n="orgDescription">
                 River Sentinel es un proyecto de vigilancia ambiental que utiliza tecnología IoT
                 para proteger el medio ambiente. Mediante estaciones autónomas ubicadas en zonas
                 de difícil acceso, monitorizamos puntos vulnerables a la creación de vertederos
@@ -649,7 +664,6 @@
             </p>
 
             <div class="org-contact">
-                <!-- Actualiza estos datos de contacto -->
                 <div class="contact-item">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
@@ -660,8 +674,7 @@
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                     </svg>
-                    <!-- TODO: Reemplaza con ubicación real -->
-                    <span>Zona de vigilancia ambiental</span>
+                    <span data-i18n="orgLocation">Zona de vigilancia ambiental</span>
                 </div>
             </div>
         </div>
@@ -676,8 +689,8 @@
                 </svg>
             </div>
             <div class="warning-content">
-                <h3>Por favor, no manipules este equipo</h3>
-                <p>
+                <h3 data-i18n="warningTitle">Por favor, no manipules este equipo</h3>
+                <p data-i18n="warningText">
                     Esta estación contiene sensores y cámaras que trabajan de forma autónoma.
                     Moverla, golpearla o alterarla puede comprometer la vigilancia de la zona
                     y dificultar la detección de actividades contaminantes. Si observas algún
@@ -696,8 +709,8 @@
                 </svg>
             </div>
             <div class="warning-content">
-                <h3 style="color: #1e40af;">Privacidad y protección de datos</h3>
-                <p style="color: #2563eb;">
+                <h3 style="color: #1e40af;" data-i18n="privacyTitle">Privacidad y protección de datos</h3>
+                <p style="color: #2563eb;" data-i18n="privacyText">
                     Las imágenes captadas por este dispositivo se procesan internamente
                     y nunca se almacenan ni se transmiten fuera de él. Solo se envían
                     datos analíticos anonimizados, como la cantidad o el tipo de residuos
@@ -710,8 +723,80 @@
 
     <!-- FOOTER -->
     <footer class="footer">
-        <p><span class="brand">River Sentinel</span> &middot; Protegiendo el medio ambiente</p>
+        <p><span class="brand">River Sentinel</span> &middot; <span data-i18n="footer">Protegiendo el medio ambiente</span></p>
     </footer>
+
+    <script>
+        const translations = {
+            es: {
+                subtitle: 'Vigilancia Ambiental en Zonas de Difícil Acceso',
+                introTitle: 'Has encontrado una estación de vigilancia ambiental',
+                introText: 'Este dispositivo forma parte de la red <strong>River Sentinel</strong>, un sistema de vigilancia ambiental que monitoriza zonas de difícil acceso para detectar vertederos ilegales, acumulación de residuos y otras alteraciones del entorno natural.',
+                imgDevice: 'Foto del dispositivo instalado en la zona',
+                howTitle: '¿Cómo funciona?',
+                step1Title: 'Detección continua',
+                step1Text: 'Vigila la zona de forma ininterrumpida, detectando cambios en el entorno que puedan indicar vertidos, acumulación de residuos u otras alteraciones ambientales.',
+                step2Title: 'Captura visual',
+                step2Text: 'Una cámara integrada toma fotografías periódicas de la zona, permitiendo identificar visualmente la aparición de residuos, vertederos ilegales o cualquier actividad sospechosa.',
+                step3Title: 'Transmisión de datos',
+                step3Text: 'Las imágenes y los datos recopilados se envían automáticamente a un sistema central, donde se procesan para detectar posibles incidencias de forma temprana.',
+                step4Title: 'Alertas y respuesta',
+                step4Text: 'Cuando se detecta una irregularidad, el sistema genera alertas para que el equipo responsable pueda intervenir a tiempo y evitar daños mayores al medio ambiente.',
+                imgEnvironment: 'Foto panorámica del entorno vigilado',
+                whoTitle: '¿Quién lo gestiona?',
+                orgSubtitle: 'Vigilancia Ambiental',
+                orgDescription: 'River Sentinel es un proyecto de vigilancia ambiental que utiliza tecnología IoT para proteger el medio ambiente. Mediante estaciones autónomas ubicadas en zonas de difícil acceso, monitorizamos puntos vulnerables a la creación de vertederos ilegales y acumulación de residuos, contribuyendo a la detección temprana de estas actividades y a la conservación del entorno natural.',
+                orgLocation: 'Zona de vigilancia ambiental',
+                warningTitle: 'Por favor, no manipules este equipo',
+                warningText: 'Esta estación contiene sensores y cámaras que trabajan de forma autónoma. Moverla, golpearla o alterarla puede comprometer la vigilancia de la zona y dificultar la detección de actividades contaminantes. Si observas algún daño o situación anormal, te agradeceríamos que nos lo comuniques.',
+                privacyTitle: 'Privacidad y protección de datos',
+                privacyText: 'Las imágenes captadas por este dispositivo se procesan internamente y nunca se almacenan ni se transmiten fuera de él. Solo se envían datos analíticos anonimizados, como la cantidad o el tipo de residuos detectados. Este sistema cumple con la normativa vigente de protección de datos y no recoge información personal de ningún tipo.',
+                footer: 'Protegiendo el medio ambiente'
+            },
+            en: {
+                subtitle: 'Environmental Surveillance in Hard-to-Reach Areas',
+                introTitle: 'You have found an environmental monitoring station',
+                introText: 'This device is part of the <strong>River Sentinel</strong> network, an environmental surveillance system that monitors hard-to-reach areas to detect illegal dumping, waste accumulation and other alterations to the natural environment.',
+                imgDevice: 'Photo of the device installed in the area',
+                howTitle: 'How does it work?',
+                step1Title: 'Continuous detection',
+                step1Text: 'It monitors the area around the clock, detecting changes in the environment that may indicate dumping, waste build-up or other environmental disturbances.',
+                step2Title: 'Visual capture',
+                step2Text: 'An integrated camera takes periodic photographs of the area, making it possible to visually identify the appearance of waste, illegal dumps or any suspicious activity.',
+                step3Title: 'Data transmission',
+                step3Text: 'The collected images and data are automatically sent to a central system, where they are processed to detect potential incidents at an early stage.',
+                step4Title: 'Alerts and response',
+                step4Text: 'When an irregularity is detected, the system generates alerts so the responsible team can act promptly and prevent further damage to the environment.',
+                imgEnvironment: 'Panoramic photo of the monitored area',
+                whoTitle: 'Who manages it?',
+                orgSubtitle: 'Environmental Surveillance',
+                orgDescription: 'River Sentinel is an environmental surveillance project that uses IoT technology to protect the environment. Through autonomous stations located in hard-to-reach areas, we monitor sites vulnerable to illegal dumping and waste accumulation, contributing to the early detection of these activities and the conservation of the natural surroundings.',
+                orgLocation: 'Environmental surveillance area',
+                warningTitle: 'Please do not tamper with this equipment',
+                warningText: 'This station contains sensors and cameras that operate autonomously. Moving, hitting or altering it may compromise the surveillance of this area and hinder the detection of polluting activities. If you notice any damage or unusual situation, we would appreciate you letting us know.',
+                privacyTitle: 'Privacy and data protection',
+                privacyText: 'Images captured by this device are processed internally and are never stored or transmitted outside of it. Only anonymised analytical data is sent, such as the amount or type of waste detected. This system complies with current data protection regulations and does not collect any personal information.',
+                footer: 'Protecting the environment'
+            }
+        };
+
+        function setLang(lang) {
+            document.documentElement.lang = lang;
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.trim() === lang.toUpperCase());
+            });
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    if (el.hasAttribute('data-i18n-html')) {
+                        el.innerHTML = translations[lang][key];
+                    } else {
+                        el.textContent = translations[lang][key];
+                    }
+                }
+            });
+        }
+    </script>
 
 </body>
 </html>
