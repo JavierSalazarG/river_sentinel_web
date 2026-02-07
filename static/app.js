@@ -205,6 +205,7 @@ function showSection(section) {
     document.getElementById('section-components')?.classList.add('hidden');
     document.getElementById('section-stats')?.classList.add('hidden');
     document.getElementById('section-config')?.classList.add('hidden');
+    document.getElementById('section-download')?.classList.add('hidden');
 
     // Mostrar seccion seleccionada
     const sectionEl = document.getElementById(`section-${section}`);
@@ -229,6 +230,8 @@ function showSection(section) {
         loadStatsSection();
     } else if (section === 'config') {
         loadConfigSection();
+    } else if (section === 'download') {
+        loadDownloadSection();
     }
 }
 
@@ -3011,3 +3014,104 @@ document.addEventListener('DOMContentLoaded', () => {
         espConfigForm.addEventListener('submit', saveEspConfig);
     }
 });
+
+// ==================== SECCION DESCARGA APP ====================
+
+const GITHUB_REPO = 'JavierSalazarG/river_sentinel_web';
+const GITHUB_RELEASES_API = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
+let downloadDataLoaded = false;
+
+async function loadDownloadSection() {
+    // Solo cargar una vez
+    if (downloadDataLoaded) return;
+
+    const loading = document.getElementById('download-loading');
+    const content = document.getElementById('download-content');
+    const error = document.getElementById('download-error');
+    const errorMsg = document.getElementById('download-error-msg');
+
+    try {
+        const response = await fetch(GITHUB_RELEASES_API);
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error('No hay releases disponibles todavia.');
+            }
+            throw new Error('Error al obtener informacion del release.');
+        }
+
+        const release = await response.json();
+
+        // Buscar el APK en los assets
+        const apkAsset = release.assets.find(asset => asset.name.endsWith('.apk'));
+
+        // Actualizar version
+        document.getElementById('download-version').textContent = release.tag_name;
+
+        // Actualizar fecha
+        const releaseDate = new Date(release.published_at);
+        document.getElementById('download-date').textContent =
+            releaseDate.toLocaleDateString('es-ES', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+
+        // Actualizar boton de descarga
+        const downloadBtn = document.getElementById('download-apk-btn');
+
+        if (apkAsset) {
+            // Mostrar tamano
+            const sizeInMB = (apkAsset.size / (1024 * 1024)).toFixed(1);
+            document.getElementById('download-size').textContent = `${sizeInMB} MB`;
+
+            // Activar boton
+            downloadBtn.href = apkAsset.browser_download_url;
+            downloadBtn.innerHTML = `<span class="download-icon">⬇</span> Descargar APK (${sizeInMB} MB)`;
+        } else {
+            document.getElementById('download-size').textContent = 'APK no disponible';
+            downloadBtn.classList.add('disabled');
+            downloadBtn.style.pointerEvents = 'none';
+            downloadBtn.style.opacity = '0.5';
+            downloadBtn.innerHTML = 'APK no disponible';
+        }
+
+        // Mostrar notas del release
+        if (release.body) {
+            const notesContainer = document.getElementById('download-notes');
+            const notesList = document.getElementById('download-notes-list');
+
+            // Parsear notas
+            const notes = release.body
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0 && !line.startsWith('#'))
+                .map(line => line.replace(/^[-*]\s*/, ''));
+
+            if (notes.length > 0) {
+                notesList.innerHTML = notes
+                    .slice(0, 5)
+                    .map(note => `<li>${escapeHtmlDownload(note)}</li>`)
+                    .join('');
+                notesContainer.classList.remove('hidden');
+            }
+        }
+
+        // Mostrar contenido
+        loading.classList.add('hidden');
+        content.classList.remove('hidden');
+        downloadDataLoaded = true;
+
+    } catch (err) {
+        console.error('Error cargando release:', err);
+        loading.classList.add('hidden');
+        error.classList.remove('hidden');
+        errorMsg.textContent = err.message;
+    }
+}
+
+function escapeHtmlDownload(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}

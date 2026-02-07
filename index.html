@@ -39,9 +39,6 @@
                     <button type="submit" class="btn btn-primary btn-block">Entrar</button>
                 </form>
                 <p class="auth-info">Contacta con un administrador para obtener acceso.</p>
-                <div class="app-download-link">
-                    <a href="download.html">📱 Descargar App para Android</a>
-                </div>
             </div>
         </div>
     </div>
@@ -74,6 +71,7 @@
             <button class="nav-btn" onclick="showSection('components')" id="nav-components">Componentes</button>
             <button class="nav-btn" onclick="showSection('stats')" id="nav-stats">Estadisticas</button>
             <button class="nav-btn" onclick="showSection('config')" id="nav-config">Configuracion</button>
+            <button class="nav-btn" onclick="showSection('download')" id="nav-download">App Movil</button>
         </nav>
 
         <main>
@@ -465,6 +463,89 @@
                         <p class="console-welcome">Las respuestas de la API apareceran aqui...</p>
                     </div>
                     <button id="clear-console" class="btn btn-secondary">Limpiar consola</button>
+                </section>
+            </div>
+
+            <!-- Seccion Descarga App (visible para todos los logueados) -->
+            <div id="section-download" class="hidden">
+                <section class="card download-card">
+                    <div class="download-header">
+                        <img src="static/logo.png" alt="Centinela del Rio" class="download-app-icon">
+                        <div class="download-title">
+                            <h2>Centinela del Rio</h2>
+                            <p>Aplicacion Movil para Android</p>
+                        </div>
+                    </div>
+
+                    <div class="download-description">
+                        <p>Descarga la aplicacion movil para gestionar el sistema desde tu dispositivo Android. Recibe notificaciones de alertas, revisa detecciones y gestiona componentes desde cualquier lugar.</p>
+                    </div>
+
+                    <div id="download-loading" class="download-loading">
+                        <div class="spinner"></div>
+                        <p>Cargando informacion del release...</p>
+                    </div>
+
+                    <div id="download-content" class="hidden">
+                        <div class="download-version-info">
+                            <span id="download-version" class="version-badge">v1.0.0</span>
+                            <span id="download-date" class="version-date">--</span>
+                            <span id="download-size" class="version-size">--</span>
+                        </div>
+
+                        <a id="download-apk-btn" href="#" class="btn btn-success btn-large download-btn-main" download>
+                            <span class="download-icon">⬇</span>
+                            Descargar APK
+                        </a>
+
+                        <div id="download-notes" class="download-notes hidden">
+                            <h4>Novedades en esta version:</h4>
+                            <ul id="download-notes-list"></ul>
+                        </div>
+                    </div>
+
+                    <div id="download-error" class="download-error hidden">
+                        <p id="download-error-msg">No se pudo cargar la informacion del release.</p>
+                    </div>
+
+                    <div class="download-features">
+                        <h4>Caracteristicas de la App</h4>
+                        <div class="features-grid">
+                            <div class="feature-item">
+                                <span class="feature-icon">📊</span>
+                                <span>Dashboard con resumen</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">🗺️</span>
+                                <span>Mapa de dispositivos</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">🔔</span>
+                                <span>Alertas en tiempo real</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">🔧</span>
+                                <span>Gestion de componentes</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">📈</span>
+                                <span>Estadisticas</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">🔐</span>
+                                <span>Soporte 2FA</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="download-requirements">
+                        <h4>Requisitos</h4>
+                        <ul>
+                            <li>Android 6.0 o superior</li>
+                            <li>Conexion a internet</li>
+                            <li>Cuenta de usuario activa</li>
+                        </ul>
+                    </div>
                 </section>
             </div>
         </main>
