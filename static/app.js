@@ -59,11 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ==================== AUTENTICACION ====================
 
-function showAuthScreen() {
-    authScreen.classList.remove('hidden');
-    appEl.classList.add('hidden');
-}
-
 function showApp() {
     authScreen.classList.add('hidden');
     appEl.classList.remove('hidden');
@@ -235,45 +230,241 @@ function showSection(section) {
     }
 }
 
-// ==================== LOGIN ====================
+// ==================== LOGIN CON SEGURIDAD ====================
+
+// Configuracion de seguridad
+const LOGIN_SECURITY = {
+    maxAttempts: 5,
+    lockoutTime: 60, // segundos
+    attemptResetTime: 300 // 5 minutos para resetear intentos
+};
+
+// Estado de intentos de login
+let loginAttempts = parseInt(localStorage.getItem('loginAttempts') || '0');
+let lockoutUntil = parseInt(localStorage.getItem('lockoutUntil') || '0');
+let lastAttemptTime = parseInt(localStorage.getItem('lastAttemptTime') || '0');
+let lockoutInterval = null;
+
+// Inicializar estado de seguridad al cargar
+function initLoginSecurity() {
+    const now = Date.now();
+
+    // Resetear intentos si ha pasado el tiempo de reset
+    if (lastAttemptTime && (now - lastAttemptTime) > LOGIN_SECURITY.attemptResetTime * 1000) {
+        resetLoginAttempts();
+    }
+
+    // Verificar si hay lockout activo
+    if (lockoutUntil > now) {
+        showLockout();
+    } else if (lockoutUntil > 0) {
+        // Lockout expirado, resetear
+        resetLoginAttempts();
+    }
+
+    updateAttemptsDisplay();
+}
+
+// Mostrar/ocultar contrasena
+function togglePasswordVisibility(inputId, button) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        button.classList.add('active');
+        button.setAttribute('aria-label', 'Ocultar contrasena');
+    } else {
+        input.type = 'password';
+        button.classList.remove('active');
+        button.setAttribute('aria-label', 'Mostrar contrasena');
+    }
+}
+
+// Sanitizar entrada para prevenir XSS
+function sanitizeInput(str) {
+    if (!str) return '';
+    return str
+        .replace(/[<>]/g, '') // Eliminar < y >
+        .replace(/javascript:/gi, '') // Eliminar javascript:
+        .replace(/on\w+\s*=/gi, '') // Eliminar event handlers
+        .trim()
+        .substring(0, 500); // Limitar longitud
+}
+
+// Validar formato de email
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email) && email.length <= 254;
+}
+
+// Mostrar lockout
+function showLockout() {
+    const lockoutEl = document.getElementById('login-lockout');
+    const timerEl = document.getElementById('lockout-timer');
+    const submitBtn = document.getElementById('login-submit-btn');
+    const attemptsEl = document.getElementById('login-attempts');
+
+    lockoutEl.classList.remove('hidden');
+    attemptsEl.classList.add('hidden');
+    submitBtn.disabled = true;
+
+    // Actualizar timer
+    function updateTimer() {
+        const remaining = Math.ceil((lockoutUntil - Date.now()) / 1000);
+        if (remaining <= 0) {
+            clearInterval(lockoutInterval);
+            lockoutEl.classList.add('hidden');
+            submitBtn.disabled = false;
+            resetLoginAttempts();
+            updateAttemptsDisplay();
+        } else {
+            timerEl.textContent = remaining;
+        }
+    }
+
+    updateTimer();
+    lockoutInterval = setInterval(updateTimer, 1000);
+}
+
+// Actualizar display de intentos
+function updateAttemptsDisplay() {
+    const attemptsEl = document.getElementById('login-attempts');
+    const countEl = document.getElementById('attempts-count');
+    const remaining = LOGIN_SECURITY.maxAttempts - loginAttempts;
+
+    if (loginAttempts > 0 && remaining > 0 && remaining <= 3) {
+        attemptsEl.classList.remove('hidden');
+        countEl.textContent = remaining;
+    } else {
+        attemptsEl.classList.add('hidden');
+    }
+}
+
+// Registrar intento fallido
+function recordFailedAttempt() {
+    loginAttempts++;
+    lastAttemptTime = Date.now();
+    localStorage.setItem('loginAttempts', loginAttempts.toString());
+    localStorage.setItem('lastAttemptTime', lastAttemptTime.toString());
+
+    if (loginAttempts >= LOGIN_SECURITY.maxAttempts) {
+        lockoutUntil = Date.now() + (LOGIN_SECURITY.lockoutTime * 1000);
+        localStorage.setItem('lockoutUntil', lockoutUntil.toString());
+        showLockout();
+    } else {
+        updateAttemptsDisplay();
+    }
+
+    // Efecto de shake en el formulario
+    const formContainer = document.getElementById('login-form-container');
+    formContainer.classList.add('shake');
+    setTimeout(() => formContainer.classList.remove('shake'), 500);
+}
+
+// Resetear intentos
+function resetLoginAttempts() {
+    loginAttempts = 0;
+    lockoutUntil = 0;
+    lastAttemptTime = 0;
+    localStorage.removeItem('loginAttempts');
+    localStorage.removeItem('lockoutUntil');
+    localStorage.removeItem('lastAttemptTime');
+    if (lockoutInterval) {
+        clearInterval(lockoutInterval);
+        lockoutInterval = null;
+    }
+}
+
+// Mostrar estado de carga
+function setLoginLoading(loading) {
+    const submitBtn = document.getElementById('login-submit-btn');
+    const btnText = document.getElementById('login-btn-text');
+    const btnLoading = document.getElementById('login-btn-loading');
+
+    submitBtn.disabled = loading;
+    btnText.classList.toggle('hidden', loading);
+    btnLoading.classList.toggle('hidden', !loading);
+}
 
 async function handleLogin(e) {
     e.preventDefault();
     loginError.classList.add('hidden');
 
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
-    const totpCode = document.getElementById('login-totp').value;
+    // Verificar lockout
+    if (lockoutUntil > Date.now()) {
+        return;
+    }
+
+    const emailInput = document.getElementById('login-email');
+    const passwordInput = document.getElementById('login-password');
+    const totpInput = document.getElementById('login-totp');
     const totpGroup = document.getElementById('totp-group');
+
+    // Sanitizar entradas
+    const email = sanitizeInput(emailInput.value.toLowerCase());
+    const password = passwordInput.value; // No sanitizar password para permitir caracteres especiales
+    const totpCode = sanitizeInput(totpInput.value);
+
+    // Validaciones de frontend
+    if (!isValidEmail(email)) {
+        loginError.textContent = 'Por favor, introduce un email valido';
+        loginError.classList.remove('hidden');
+        emailInput.focus();
+        return;
+    }
+
+    if (password.length < 6) {
+        loginError.textContent = 'La contrasena debe tener al menos 6 caracteres';
+        loginError.classList.remove('hidden');
+        passwordInput.focus();
+        return;
+    }
+
+    if (password.length > 128) {
+        loginError.textContent = 'La contrasena es demasiado larga';
+        loginError.classList.remove('hidden');
+        passwordInput.focus();
+        return;
+    }
+
+    // Mostrar loading
+    setLoginLoading(true);
 
     try {
         const loginData = { email, password };
-        if (totpCode) {
+        if (totpCode && totpCode.length === 6) {
             loginData.totp_code = totpCode;
         }
 
         const response = await fetch(`${API_BASE}/auth/login`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest' // Ayuda a prevenir CSRF
+            },
             body: JSON.stringify(loginData)
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data.error || 'Error al iniciar sesion');
+            recordFailedAttempt();
+            throw new Error(data.error || 'Credenciales incorrectas');
         }
 
         // Verificar si requiere 2FA
         if (data.requires_2fa) {
+            setLoginLoading(false);
             totpGroup.classList.remove('hidden');
-            document.getElementById('login-totp').focus();
+            totpInput.focus();
             loginError.textContent = 'Introduce el codigo de tu app de autenticacion';
             loginError.classList.remove('hidden');
             loginError.style.background = '#dbeafe';
             loginError.style.color = '#1e40af';
             return;
         }
+
+        // Login exitoso - resetear intentos
+        resetLoginAttempts();
 
         authToken = data.token;
         currentUser = data.user;
@@ -285,13 +476,24 @@ async function handleLogin(e) {
         totpGroup.classList.add('hidden');
         loginError.style.background = '';
         loginError.style.color = '';
+
+        setLoginLoading(false);
         showApp();
+
     } catch (error) {
+        setLoginLoading(false);
         loginError.textContent = error.message;
         loginError.classList.remove('hidden');
         loginError.style.background = '';
         loginError.style.color = '';
     }
+}
+
+// Inicializar seguridad cuando se muestra la pantalla de auth
+function showAuthScreen() {
+    authScreen.classList.remove('hidden');
+    appEl.classList.add('hidden');
+    initLoginSecurity();
 }
 
 function logout() {
