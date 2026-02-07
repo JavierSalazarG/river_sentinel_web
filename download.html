@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Descargar App - Centinela del Rio</title>
+    <link rel="icon" type="image/png" href="static/logo.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .download-container {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .app-icon {
+            width: 120px;
+            height: 120px;
+            border-radius: 24px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .app-name {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .app-subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .version-info {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .version-tag {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .version-date {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .version-size {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            background: var(--success);
+            color: white;
+            padding: 1rem 2.5rem;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .download-btn:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .download-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .download-btn.disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .download-btn.disabled:hover {
+            box-shadow: none;
+            transform: none;
+        }
+
+        .release-notes {
+            text-align: left;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .release-notes h3 {
+            font-size: 1rem;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+
+        .release-notes ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .release-notes li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .release-notes li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .loading {
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 1.5rem;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .platform-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--bg);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .android-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        @media (max-width: 480px) {
+            .download-container {
+                padding: 2rem;
+            }
+
+            .app-icon {
+                width: 80px;
+                height: 80px;
+            }
+
+            .app-name {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="download-container">
+        <div id="loading" class="loading">
+            <div class="loading-spinner"></div>
+            <p>Cargando informacion...</p>
+        </div>
+
+        <div id="content" style="display: none;">
+            <img src="static/logo.png" alt="Centinela del Rio" class="app-icon">
+            <h1 class="app-name">Centinela del Rio</h1>
+            <p class="app-subtitle">Sistema de Monitorizacion Ambiental</p>
+
+            <div class="platform-badge">
+                <svg class="android-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24c-1.38-.59-2.93-.92-4.54-.92-1.62 0-3.16.33-4.56.93L5.55 5.67c-.18-.28-.54-.37-.83-.22-.31.16-.42.54-.26.85L6.3 9.48C3.15 11.25.85 14.48.85 18.27h22.3c0-3.79-2.3-7.02-5.45-8.79M7 15.25c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25m10 0c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25"/>
+                </svg>
+                Android
+            </div>
+
+            <div class="version-info">
+                <span id="version-tag" class="version-tag">v1.0.0</span>
+                <p id="version-date" class="version-date">Publicado: --</p>
+                <p id="version-size" class="version-size">Tamano: --</p>
+            </div>
+
+            <a id="download-btn" href="#" class="download-btn disabled">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7,10 12,15 17,10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span id="download-text">Descargar APK</span>
+            </a>
+
+            <div id="release-notes" class="release-notes" style="display: none;">
+                <h3>Novedades en esta version:</h3>
+                <ul id="notes-list"></ul>
+            </div>
+
+            <div id="error-container" style="display: none;">
+                <div class="error-message" id="error-message"></div>
+            </div>
+
+            <a href="index.html" class="back-link">← Ir al Panel de Control</a>
+        </div>
+    </div>
+
+    <script>
+        // Configuracion - Repositorio de GitHub del proyecto web
+        const GITHUB_REPO = 'JavierSalazarG/river_sentinel_web';
+        const GITHUB_API = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
+
+        async function loadReleaseInfo() {
+            const loading = document.getElementById('loading');
+            const content = document.getElementById('content');
+            const errorContainer = document.getElementById('error-container');
+            const errorMessage = document.getElementById('error-message');
+
+            try {
+                const response = await fetch(GITHUB_API);
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('No hay releases disponibles todavia.');
+                    }
+                    throw new Error('Error al obtener informacion del release.');
+                }
+
+                const release = await response.json();
+
+                // Buscar el APK en los assets
+                const apkAsset = release.assets.find(asset =>
+                    asset.name.endsWith('.apk')
+                );
+
+                // Actualizar version
+                document.getElementById('version-tag').textContent = release.tag_name;
+
+                // Actualizar fecha
+                const releaseDate = new Date(release.published_at);
+                document.getElementById('version-date').textContent =
+                    `Publicado: ${releaseDate.toLocaleDateString('es-ES', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    })}`;
+
+                // Actualizar boton de descarga
+                const downloadBtn = document.getElementById('download-btn');
+                const downloadText = document.getElementById('download-text');
+
+                if (apkAsset) {
+                    // Mostrar tamano
+                    const sizeInMB = (apkAsset.size / (1024 * 1024)).toFixed(1);
+                    document.getElementById('version-size').textContent = `Tamano: ${sizeInMB} MB`;
+
+                    // Activar boton
+                    downloadBtn.href = apkAsset.browser_download_url;
+                    downloadBtn.classList.remove('disabled');
+                    downloadText.textContent = `Descargar APK (${sizeInMB} MB)`;
+                } else {
+                    document.getElementById('version-size').textContent = 'APK no disponible';
+                    downloadText.textContent = 'APK no disponible';
+                }
+
+                // Mostrar notas del release
+                if (release.body) {
+                    const notesContainer = document.getElementById('release-notes');
+                    const notesList = document.getElementById('notes-list');
+
+                    // Parsear notas (asumiendo formato con viñetas o lineas)
+                    const notes = release.body
+                        .split('\n')
+                        .map(line => line.trim())
+                        .filter(line => line.length > 0 && !line.startsWith('#'))
+                        .map(line => line.replace(/^[-*]\s*/, ''));
+
+                    if (notes.length > 0) {
+                        notesList.innerHTML = notes
+                            .slice(0, 5) // Maximo 5 notas
+                            .map(note => `<li>${escapeHtml(note)}</li>`)
+                            .join('');
+                        notesContainer.style.display = 'block';
+                    }
+                }
+
+                // Mostrar contenido
+                loading.style.display = 'none';
+                content.style.display = 'block';
+
+            } catch (error) {
+                console.error('Error:', error);
+                loading.style.display = 'none';
+                content.style.display = 'block';
+                errorContainer.style.display = 'block';
+                errorMessage.textContent = error.message;
+
+                // Deshabilitar boton
+                document.getElementById('download-btn').classList.add('disabled');
+                document.getElementById('download-text').textContent = 'No disponible';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Cargar al iniciar
+        document.addEventListener('DOMContentLoaded', loadReleaseInfo);
+    </script>
+</body>
+</html>

@@ -95,6 +95,32 @@ body {
     text-decoration: underline;
 }
 
+.app-download-link {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    text-align: center;
+}
+
+.app-download-link a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    background: rgba(37, 99, 235, 0.1);
+    transition: all 0.2s ease;
+}
+
+.app-download-link a:hover {
+    background: rgba(37, 99, 235, 0.2);
+    transform: translateY(-1px);
+}
+
 .btn-block {
     width: 100%;
     padding: 0.8rem;
