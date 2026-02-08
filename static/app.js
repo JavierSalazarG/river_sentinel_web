@@ -3220,7 +3220,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==================== SECCION DESCARGA APP ====================
 
 const GITHUB_REPO = 'JavierSalazarG/river_sentinel_web';
-const GITHUB_RELEASES_API = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
+const GITHUB_RELEASES_API = `https://api.github.com/repos/${GITHUB_REPO}/releases`;
 let downloadDataLoaded = false;
 
 async function loadDownloadSection() {
@@ -3233,6 +3233,7 @@ async function loadDownloadSection() {
     const errorMsg = document.getElementById('download-error-msg');
 
     try {
+        // Obtener todas las releases
         const response = await fetch(GITHUB_RELEASES_API);
 
         if (!response.ok) {
@@ -3242,61 +3243,22 @@ async function loadDownloadSection() {
             throw new Error('Error al obtener informacion del release.');
         }
 
-        const release = await response.json();
+        const releases = await response.json();
 
-        // Buscar el APK en los assets
-        const apkAsset = release.assets.find(asset => asset.name.endsWith('.apk'));
-
-        // Actualizar version
-        document.getElementById('download-version').textContent = release.tag_name;
-
-        // Actualizar fecha
-        const releaseDate = new Date(release.published_at);
-        document.getElementById('download-date').textContent =
-            releaseDate.toLocaleDateString('es-ES', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            });
-
-        // Actualizar boton de descarga
-        const downloadBtn = document.getElementById('download-apk-btn');
-
-        if (apkAsset) {
-            // Mostrar tamano
-            const sizeInMB = (apkAsset.size / (1024 * 1024)).toFixed(1);
-            document.getElementById('download-size').textContent = `${sizeInMB} MB`;
-
-            // Activar boton
-            downloadBtn.href = apkAsset.browser_download_url;
-            downloadBtn.innerHTML = `<span class="download-icon">⬇</span> Descargar APK (${sizeInMB} MB)`;
-        } else {
-            document.getElementById('download-size').textContent = 'APK no disponible';
-            downloadBtn.classList.add('disabled');
-            downloadBtn.style.pointerEvents = 'none';
-            downloadBtn.style.opacity = '0.5';
-            downloadBtn.innerHTML = 'APK no disponible';
+        if (!releases || releases.length === 0) {
+            throw new Error('No hay releases disponibles todavia.');
         }
 
-        // Mostrar notas del release
-        if (release.body) {
-            const notesContainer = document.getElementById('download-notes');
-            const notesList = document.getElementById('download-notes-list');
+        // La primera es la mas reciente (latest)
+        const latestRelease = releases[0];
+        const previousReleases = releases.slice(1);
 
-            // Parsear notas
-            const notes = release.body
-                .split('\n')
-                .map(line => line.trim())
-                .filter(line => line.length > 0 && !line.startsWith('#'))
-                .map(line => line.replace(/^[-*]\s*/, ''));
+        // Mostrar la version mas reciente
+        displayLatestRelease(latestRelease);
 
-            if (notes.length > 0) {
-                notesList.innerHTML = notes
-                    .slice(0, 5)
-                    .map(note => `<li>${escapeHtmlDownload(note)}</li>`)
-                    .join('');
-                notesContainer.classList.remove('hidden');
-            }
+        // Mostrar versiones anteriores si existen
+        if (previousReleases.length > 0) {
+            displayPreviousReleases(previousReleases);
         }
 
         // Mostrar contenido
@@ -3309,6 +3271,100 @@ async function loadDownloadSection() {
         loading.classList.add('hidden');
         error.classList.remove('hidden');
         errorMsg.textContent = err.message;
+    }
+}
+
+function displayLatestRelease(release) {
+    // Buscar el APK en los assets
+    const apkAsset = release.assets.find(asset => asset.name.endsWith('.apk'));
+
+    // Actualizar version
+    document.getElementById('download-version').textContent = release.tag_name;
+
+    // Actualizar fecha
+    const releaseDate = new Date(release.published_at);
+    document.getElementById('download-date').textContent =
+        releaseDate.toLocaleDateString('es-ES', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+
+    // Actualizar boton de descarga
+    const downloadBtn = document.getElementById('download-apk-btn');
+
+    if (apkAsset) {
+        // Mostrar tamano
+        const sizeInMB = (apkAsset.size / (1024 * 1024)).toFixed(1);
+        document.getElementById('download-size').textContent = `${sizeInMB} MB`;
+
+        // Activar boton
+        downloadBtn.href = apkAsset.browser_download_url;
+        downloadBtn.innerHTML = `<span class="download-icon">⬇</span> Descargar APK (${sizeInMB} MB)`;
+    } else {
+        document.getElementById('download-size').textContent = 'APK no disponible';
+        downloadBtn.classList.add('disabled');
+        downloadBtn.style.pointerEvents = 'none';
+        downloadBtn.style.opacity = '0.5';
+        downloadBtn.innerHTML = 'APK no disponible';
+    }
+
+    // Mostrar notas del release
+    if (release.body) {
+        const notesContainer = document.getElementById('download-notes');
+        const notesList = document.getElementById('download-notes-list');
+
+        // Parsear notas
+        const notes = release.body
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0 && !line.startsWith('#'))
+            .map(line => line.replace(/^[-*]\s*/, ''));
+
+        if (notes.length > 0) {
+            notesList.innerHTML = notes
+                .slice(0, 5)
+                .map(note => `<li>${escapeHtmlDownload(note)}</li>`)
+                .join('');
+            notesContainer.classList.remove('hidden');
+        }
+    }
+}
+
+function displayPreviousReleases(releases) {
+    const container = document.getElementById('previous-versions');
+    const list = document.getElementById('previous-versions-list');
+
+    const html = releases.map(release => {
+        const apkAsset = release.assets.find(asset => asset.name.endsWith('.apk'));
+        const releaseDate = new Date(release.published_at);
+        const dateStr = releaseDate.toLocaleDateString('es-ES', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+
+        if (!apkAsset) return '';
+
+        const sizeInMB = (apkAsset.size / (1024 * 1024)).toFixed(1);
+
+        return `
+            <div class="previous-version-item">
+                <div class="previous-version-info">
+                    <span class="previous-version-tag">${escapeHtmlDownload(release.tag_name)}</span>
+                    <span class="previous-version-date">${dateStr}</span>
+                    <span class="previous-version-size">${sizeInMB} MB</span>
+                </div>
+                <a href="${apkAsset.browser_download_url}" class="btn btn-secondary btn-sm" download>
+                    Descargar
+                </a>
+            </div>
+        `;
+    }).filter(html => html !== '').join('');
+
+    if (html) {
+        list.innerHTML = html;
+        container.classList.remove('hidden');
     }
 }
 
