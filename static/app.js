@@ -1324,13 +1324,19 @@ async function deleteDevice(id) {
 
 // ==================== API REQUEST ====================
 
-async function apiRequest(method, endpoint, body = null) {
+async function apiRequest(method, endpoint, body = null, timeoutMs = 30000) {
     const url = `${API_BASE}${endpoint}`;
+
+    // Crear AbortController para timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
     const options = {
         method,
         headers: {
             'Content-Type': 'application/json'
-        }
+        },
+        signal: controller.signal
     };
 
     if (authToken) {
@@ -1342,7 +1348,18 @@ async function apiRequest(method, endpoint, body = null) {
     }
 
     const startTime = performance.now();
-    const response = await fetch(url, options);
+    let response;
+    try {
+        response = await fetch(url, options);
+    } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+            throw new Error('La solicitud tardó demasiado tiempo');
+        }
+        throw error;
+    }
+    clearTimeout(timeoutId);
+
     const endTime = performance.now();
     const duration = Math.round(endTime - startTime);
 
@@ -2852,6 +2869,8 @@ async function openDeviceConfigModal(deviceId) {
 function closeDeviceConfigModal() {
     document.getElementById('device-config-modal').classList.add('hidden');
     currentConfigDeviceId = null;
+    // Detener polling de WiFi cuando se cierra el modal
+    stopWifiStatusPolling();
 }
 
 // Cambiar tab
@@ -3031,12 +3050,79 @@ function resetEspConfig() {
     document.getElementById('config-sleep-enabled').checked = true;
 }
 
-// Actualizar estado WiFi CAM
+// Polling de estado WiFi
+let wifiStatusPollingInterval = null;
+
+// Actualizar estado WiFi CAM (función principal que gestiona polling)
 function updateCamWifiStatus(enabled, pending) {
     camWifiEnabled = enabled;
     camWifiPending = pending;
 
+    // Actualizar UI
+    updateCamWifiStatusUI(enabled, pending);
+
+    // Gestionar polling
+    if (pending) {
+        // Iniciar polling para detectar cuando cambie el estado
+        startWifiStatusPolling();
+    } else {
+        // Detener polling si estaba activo
+        stopWifiStatusPolling();
+    }
+}
+
+// Polling del estado WiFi - corre mientras el modal este abierto y haya estado pendiente
+function startWifiStatusPolling() {
+    if (wifiStatusPollingInterval) return; // Ya está corriendo
+
+    console.log('[WiFi] Iniciando polling de estado cada 5 segundos...');
+    wifiStatusPollingInterval = setInterval(async () => {
+        if (!currentConfigDeviceId) {
+            stopWifiStatusPolling();
+            return;
+        }
+
+        try {
+            const response = await apiRequest('GET', `/devices/${currentConfigDeviceId}/config`);
+            if (response.ok) {
+                const config = await response.json();
+                // Verificar si el estado cambió
+                if (config.cam_wifi_enabled !== camWifiEnabled || config.cam_wifi_pending !== camWifiPending) {
+                    console.log('[WiFi] Estado actualizado:', {
+                        enabled: config.cam_wifi_enabled,
+                        pending: config.cam_wifi_pending
+                    });
+                    // Actualizar sin volver a iniciar/parar el polling (evitar recursión)
+                    camWifiEnabled = config.cam_wifi_enabled;
+                    camWifiPending = config.cam_wifi_pending;
+                    updateCamWifiStatusUI(config.cam_wifi_enabled, config.cam_wifi_pending);
+
+                    // Si ya no hay nada pendiente, detener polling
+                    if (!config.cam_wifi_pending) {
+                        console.log('[WiFi] Estado resuelto, deteniendo polling');
+                        stopWifiStatusPolling();
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('[WiFi] Error en polling:', error);
+        }
+    }, 5000); // Cada 5 segundos para respuesta más rápida
+}
+
+function stopWifiStatusPolling() {
+    if (wifiStatusPollingInterval) {
+        console.log('[WiFi] Deteniendo polling de estado');
+        clearInterval(wifiStatusPollingInterval);
+        wifiStatusPollingInterval = null;
+    }
+}
+
+// Función auxiliar para actualizar solo la UI sin afectar el polling
+function updateCamWifiStatusUI(enabled, pending) {
     const statusBox = document.getElementById('cam-wifi-status');
+    if (!statusBox) return;
+
     const indicator = statusBox.querySelector('.wifi-indicator');
     const stateText = statusBox.querySelector('.wifi-state');
     const hintText = statusBox.querySelector('.wifi-hint');
@@ -3044,7 +3130,6 @@ function updateCamWifiStatus(enabled, pending) {
     const btnEnable = document.getElementById('btn-enable-cam-wifi');
     const btnDisable = document.getElementById('btn-disable-cam-wifi');
 
-    // Actualizar mensajes de instrucciones de acceso
     const disabledMsg = document.getElementById('cam-wifi-disabled-msg');
     const enabledMsg = document.getElementById('cam-wifi-enabled-msg');
     const pendingMsg = document.getElementById('cam-wifi-pending-msg');
@@ -3053,6 +3138,15 @@ function updateCamWifiStatus(enabled, pending) {
     if (disabledMsg) disabledMsg.classList.add('hidden');
     if (enabledMsg) enabledMsg.classList.add('hidden');
     if (pendingMsg) pendingMsg.classList.add('hidden');
+
+    // Restaurar estado de botones
+    if (btnEnable) {
+        btnEnable.disabled = false;
+        btnEnable.textContent = 'Habilitar WiFi CAM';
+    }
+    if (btnDisable) {
+        btnDisable.disabled = false;
+    }
 
     if (enabled) {
         indicator.className = 'wifi-indicator online';
@@ -3087,18 +3181,36 @@ async function enableCamWifi() {
         return;
     }
 
+    const btnEnable = document.getElementById('btn-enable-cam-wifi');
+
+    // Mostrar estado de carga
+    if (btnEnable) {
+        btnEnable.disabled = true;
+        btnEnable.textContent = 'Enviando...';
+    }
+
     try {
         const response = await apiRequest('POST', `/devices/${currentConfigDeviceId}/enable-cam-wifi`);
         if (response.ok) {
             updateCamWifiStatus(false, true);
-            alert('Comando enviado. El WiFi se activara en la proxima sesion del dispositivo.');
             logToConsole('POST', `/devices/${currentConfigDeviceId}/enable-cam-wifi`, 200);
+            // No mostrar alert, el estado visual ya informa al usuario
         } else {
             const error = await response.json();
-            alert('Error: ' + (error.detail || 'No se pudo enviar el comando'));
+            alert('Error: ' + (error.detail || error.message || 'No se pudo enviar el comando'));
+            // Restaurar boton
+            if (btnEnable) {
+                btnEnable.disabled = false;
+                btnEnable.textContent = 'Habilitar WiFi CAM';
+            }
         }
     } catch (error) {
         alert('Error de conexion: ' + error.message);
+        // Restaurar boton
+        if (btnEnable) {
+            btnEnable.disabled = false;
+            btnEnable.textContent = 'Habilitar WiFi CAM';
+        }
     }
 }
 
@@ -3109,18 +3221,37 @@ async function disableCamWifi() {
         return;
     }
 
+    const btnDisable = document.getElementById('btn-disable-cam-wifi');
+    const originalText = btnDisable ? btnDisable.textContent : '';
+
+    // Mostrar estado de carga
+    if (btnDisable) {
+        btnDisable.disabled = true;
+        btnDisable.textContent = 'Procesando...';
+    }
+
     try {
         const response = await apiRequest('POST', `/devices/${currentConfigDeviceId}/disable-cam-wifi`);
         if (response.ok) {
             updateCamWifiStatus(false, false);
-            alert(camWifiPending ? 'Comando cancelado' : 'WiFi deshabilitado');
             logToConsole('POST', `/devices/${currentConfigDeviceId}/disable-cam-wifi`, 200);
+            // No mostrar alert, el estado visual ya informa
         } else {
             const error = await response.json();
-            alert('Error: ' + (error.detail || 'No se pudo completar la accion'));
+            alert('Error: ' + (error.detail || error.message || 'No se pudo completar la accion'));
+            // Restaurar boton
+            if (btnDisable) {
+                btnDisable.disabled = false;
+                btnDisable.textContent = originalText;
+            }
         }
     } catch (error) {
         alert('Error de conexion: ' + error.message);
+        // Restaurar boton
+        if (btnDisable) {
+            btnDisable.disabled = false;
+            btnDisable.textContent = originalText;
+        }
     }
 }
 
