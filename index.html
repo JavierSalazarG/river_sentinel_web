@@ -905,39 +905,41 @@
                     </div>
 
                     <div class="config-section" id="cam-images-section">
-                        <h4>Imagenes en SD</h4>
-                        <div class="images-toolbar">
-                            <button class="btn btn-secondary btn-sm" onclick="refreshCamImages()">Actualizar</button>
-                            <select id="cam-images-folder">
-                                <option value="">Selecciona carpeta...</option>
-                            </select>
-                            <button class="btn btn-danger btn-sm" onclick="deleteOldImages()">Limpiar antiguas</button>
-                        </div>
-                        <div id="cam-images-grid" class="images-grid">
-                            <p class="empty-state">Habilita el WiFi de la CAM para ver las imagenes</p>
+                        <h4>Acceso a Imagenes de la CAM</h4>
+                        <div id="cam-access-instructions">
+                            <div class="access-step hidden" id="cam-wifi-disabled-msg">
+                                <p class="empty-state">Habilita el WiFi de la CAM para acceder a las imagenes</p>
+                            </div>
+                            <div class="access-step hidden" id="cam-wifi-enabled-msg">
+                                <div class="wifi-instructions">
+                                    <h5>WiFi de la CAM habilitado</h5>
+                                    <p>Para ver las imagenes, sigue estos pasos:</p>
+                                    <ol>
+                                        <li>Conectate a la red WiFi: <strong>Centinela-CAM</strong></li>
+                                        <li>Contraseña: <strong>cam12345678</strong></li>
+                                        <li>Abre el panel de la CAM:</li>
+                                    </ol>
+                                    <a href="http://192.168.4.1" target="_blank" class="btn btn-primary btn-block">
+                                        Abrir Panel de la CAM
+                                    </a>
+                                    <p class="hint" style="margin-top: 10px;">
+                                        Credenciales del panel: <strong>admin</strong> / <strong>centinela2024</strong>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="access-step hidden" id="cam-wifi-pending-msg">
+                                <div class="wifi-instructions pending">
+                                    <h5>Comando WiFi pendiente</h5>
+                                    <p>El comando se enviara a la CAM en la proxima conexion del Gateway.</p>
+                                    <p class="hint">Esto puede tardar hasta 15 minutos dependiendo del ciclo de deep sleep.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="config-section">
                         <h4>Estadisticas SD</h4>
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <span class="info-label">Espacio usado</span>
-                                <span class="info-value" id="config-sd-used">-</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Espacio libre</span>
-                                <span class="info-value" id="config-sd-free">-</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Total imagenes</span>
-                                <span class="info-value" id="config-sd-images">-</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Dias guardados</span>
-                                <span class="info-value" id="config-sd-days">-</span>
-                            </div>
-                        </div>
+                        <p class="hint">Las estadisticas de la tarjeta SD estan disponibles en el panel de la CAM cuando te conectas directamente a su WiFi.</p>
                     </div>
                 </div>
             </div>

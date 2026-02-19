@@ -1004,10 +1004,12 @@ async function loadLatestDetections() {
 
 async function checkHealth() {
     try {
-        const response = await fetch('/health');
+        const startTime = Date.now();
+        const response = await fetch(CONFIG.API_URL + '/health');
+        const latency = Date.now() - startTime;
         const data = await response.json();
 
-        healthStatus.textContent = data.status === 'healthy' ? 'Conectado' : 'Desconectado';
+        healthStatus.textContent = data.status === 'healthy' ? `Conectado (${latency}ms)` : 'Desconectado';
         healthStatus.className = `health-badge ${data.status}`;
     } catch (error) {
         healthStatus.textContent = 'Error';
@@ -1909,7 +1911,6 @@ async function removeComponentFromDevice(deviceId, componentId) {
 async function openComponentModal(deviceId, componentId) {
     const modal = document.getElementById('component-modal');
     const detailsEl = document.getElementById('component-details');
-    const maintenanceList = document.getElementById('maintenance-list');
 
     try {
         const response = await apiRequest('GET', `/devices/${deviceId}/components/${componentId}`);
@@ -2451,7 +2452,7 @@ async function openDeviceComponentsModal(deviceId, deviceName) {
         const hasReplacedComponents = visibleComponents.some(c => c.status === 'replaced' && c.replaced_at);
         if (hasReplacedComponents) {
             deviceComponentsCountdownInterval = setInterval(() => {
-                updateDeviceComponentsModalCountdowns(deviceId);
+                updateDeviceComponentsModalCountdowns();
             }, 1000);
         }
     } catch (error) {
@@ -2469,7 +2470,7 @@ function closeDeviceComponentsModal() {
     }
 }
 
-function updateDeviceComponentsModalCountdowns(deviceId) {
+function updateDeviceComponentsModalCountdowns() {
     const listEl = document.getElementById('device-components-modal-list');
     const countdownElements = listEl?.querySelectorAll('.replaced-countdown');
     if (!countdownElements) return;
@@ -3043,12 +3044,24 @@ function updateCamWifiStatus(enabled, pending) {
     const btnEnable = document.getElementById('btn-enable-cam-wifi');
     const btnDisable = document.getElementById('btn-disable-cam-wifi');
 
+    // Actualizar mensajes de instrucciones de acceso
+    const disabledMsg = document.getElementById('cam-wifi-disabled-msg');
+    const enabledMsg = document.getElementById('cam-wifi-enabled-msg');
+    const pendingMsg = document.getElementById('cam-wifi-pending-msg');
+
+    // Ocultar todos primero
+    if (disabledMsg) disabledMsg.classList.add('hidden');
+    if (enabledMsg) enabledMsg.classList.add('hidden');
+    if (pendingMsg) pendingMsg.classList.add('hidden');
+
     if (enabled) {
         indicator.className = 'wifi-indicator online';
         stateText.textContent = 'WiFi Habilitado';
-        hintText.textContent = 'La CAM tiene WiFi activo. Puedes conectarte para gestionar imagenes.';
+        hintText.textContent = 'La CAM tiene WiFi activo. Conectate para gestionar imagenes.';
         btnEnable.classList.add('hidden');
         btnDisable.classList.remove('hidden');
+        btnDisable.textContent = 'Deshabilitar WiFi';
+        if (enabledMsg) enabledMsg.classList.remove('hidden');
     } else if (pending) {
         indicator.className = 'wifi-indicator pending';
         stateText.textContent = 'Pendiente de activacion';
@@ -3056,6 +3069,7 @@ function updateCamWifiStatus(enabled, pending) {
         btnEnable.classList.add('hidden');
         btnDisable.classList.remove('hidden');
         btnDisable.textContent = 'Cancelar';
+        if (pendingMsg) pendingMsg.classList.remove('hidden');
     } else {
         indicator.className = 'wifi-indicator offline';
         stateText.textContent = 'WiFi Deshabilitado';
@@ -3063,6 +3077,7 @@ function updateCamWifiStatus(enabled, pending) {
         btnEnable.classList.remove('hidden');
         btnDisable.classList.add('hidden');
         btnDisable.textContent = 'Deshabilitar WiFi';
+        if (disabledMsg) disabledMsg.classList.remove('hidden');
     }
 }
 
@@ -3103,97 +3118,6 @@ async function disableCamWifi() {
         } else {
             const error = await response.json();
             alert('Error: ' + (error.detail || 'No se pudo completar la accion'));
-        }
-    } catch (error) {
-        alert('Error de conexion: ' + error.message);
-    }
-}
-
-// Refrescar imagenes de la CAM
-async function refreshCamImages() {
-    if (!camWifiEnabled) {
-        alert('El WiFi de la CAM no esta habilitado');
-        return;
-    }
-
-    const grid = document.getElementById('cam-images-grid');
-    grid.innerHTML = '<p class="empty-state">Cargando imagenes...</p>';
-
-    try {
-        const response = await apiRequest('GET', `/devices/${currentConfigDeviceId}/cam-images`);
-        if (response.ok) {
-            const data = await response.json();
-
-            // Actualizar selector de carpetas
-            const folderSelect = document.getElementById('cam-images-folder');
-            folderSelect.innerHTML = '<option value="">Todas las carpetas</option>';
-            if (data.folders) {
-                data.folders.forEach(folder => {
-                    folderSelect.innerHTML += `<option value="${folder}">${folder}</option>`;
-                });
-            }
-
-            // Mostrar imagenes
-            if (data.images && data.images.length > 0) {
-                grid.innerHTML = data.images.map(img => `
-                    <div class="image-thumb" onclick="viewCamImage('${img.path}')">
-                        <img src="${img.thumbnail || img.url}" alt="${img.name}" loading="lazy">
-                        <div class="image-date">${img.date || img.name}</div>
-                    </div>
-                `).join('');
-            } else {
-                grid.innerHTML = '<p class="empty-state">No hay imagenes</p>';
-            }
-
-            // Actualizar stats
-            if (data.stats) {
-                document.getElementById('config-sd-used').textContent =
-                    formatBytes(data.stats.used_bytes);
-                document.getElementById('config-sd-free').textContent =
-                    formatBytes(data.stats.free_bytes);
-                document.getElementById('config-sd-images').textContent =
-                    data.stats.total_images ?? '-';
-                document.getElementById('config-sd-days').textContent =
-                    data.stats.days_stored ?? '-';
-            }
-        } else {
-            grid.innerHTML = '<p class="empty-state">Error cargando imagenes</p>';
-        }
-    } catch (error) {
-        grid.innerHTML = '<p class="empty-state">Error de conexion</p>';
-    }
-}
-
-// Ver imagen de la CAM
-function viewCamImage(path) {
-    // Abrir imagen en nueva ventana o modal
-    window.open(`${API_BASE}/devices/${currentConfigDeviceId}/cam-image?path=${encodeURIComponent(path)}`, '_blank');
-}
-
-// Eliminar imagenes antiguas
-async function deleteOldImages() {
-    const days = prompt('Eliminar imagenes con mas de X dias de antiguedad:', '30');
-    if (!days) return;
-
-    const daysNum = parseInt(days);
-    if (isNaN(daysNum) || daysNum < 1) {
-        alert('Introduce un numero valido de dias');
-        return;
-    }
-
-    if (!confirm(`Eliminar todas las imagenes con mas de ${daysNum} dias?\n\nEsta accion no se puede deshacer.`)) {
-        return;
-    }
-
-    try {
-        const response = await apiRequest('DELETE', `/devices/${currentConfigDeviceId}/cam-images?older_than_days=${daysNum}`);
-        if (response.ok) {
-            const result = await response.json();
-            alert(`Eliminadas ${result.deleted_count} imagenes`);
-            refreshCamImages();
-        } else {
-            const error = await response.json();
-            alert('Error: ' + (error.detail || 'No se pudieron eliminar las imagenes'));
         }
     } catch (error) {
         alert('Error de conexion: ' + error.message);

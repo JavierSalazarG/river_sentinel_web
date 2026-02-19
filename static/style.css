@@ -2427,3 +2427,55 @@ main {
         justify-content: center;
     }
 }
+
+/* Instrucciones de acceso CAM WiFi */
+.wifi-instructions {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+}
+
+.wifi-instructions h5 {
+    margin: 0 0 0.75rem 0;
+    color: var(--success);
+    font-size: 1rem;
+}
+
+.wifi-instructions.pending h5 {
+    color: var(--warning);
+}
+
+.wifi-instructions ol {
+    margin: 0.75rem 0;
+    padding-left: 1.5rem;
+}
+
+.wifi-instructions li {
+    margin-bottom: 0.5rem;
+    color: var(--text);
+}
+
+.wifi-instructions strong {
+    color: var(--primary);
+    font-family: monospace;
+    background: rgba(37, 99, 235, 0.1);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+}
+
+.wifi-instructions .btn-block {
+    display: block;
+    width: 100%;
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.wifi-instructions .hint {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+#cam-access-instructions .access-step {
+    margin-top: 0.5rem;
+}
